@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מעקב הוצאות — דניאל ושחר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface2: #f9fafc;
+  --border: #e8eaf2;
+  --border-light: #f0f2f8;
+  --text-primary: #0d0f1a;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --daniel: #e63946;
+  --daniel-soft: #fff1f2;
+  --daniel-mid: rgba(230,57,70,0.12);
+  --shachar: #6d28d9;
+  --shachar-soft: #f5f3ff;
+  --shachar-mid: rgba(109,40,217,0.12);
+  --both: #0369a1;
+  --both-soft: #eff6ff;
+  --both-mid: rgba(3,105,161,0.12);
+  --green: #059669;
+  --green-soft: #ecfdf5;
+  --navy: #0f172a;
+  --navy2: #1e293b;
+  --accent: #3b82f6;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 16px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.05);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 7px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── HEADER ─────────────────────────────────── */
+header {
+  background: var(--navy);
+  position: relative;
+  overflow: hidden;
+}
+.header-mesh {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 80% at 90% -10%, rgba(59,130,246,0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at -10% 110%, rgba(109,40,217,0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 50% at 50% 50%, rgba(230,57,70,0.08) 0%, transparent 60%);
+}
+.header-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 36px 32px 30px;
+  position: relative;
+  z-index: 1;
+}
+.header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+.brand { display: flex; flex-direction: column; gap: 5px; }
+.brand-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+.brand-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+}
+.brand-title span { color: rgba(255,255,255,0.45); font-weight: 300; }
+
+.avatars-group {
+  display: flex;
+  align-items: center;
+}
+.avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.avatar-wrap:last-child { margin-right: -10px; }
+.avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 800;
+  border: 2.5px solid rgba(255,255,255,0.15);
+  position: relative;
+}
+.avatar.d { background: linear-gradient(135deg, #e63946 0%, #9b1c28 100%); color:#fff; }
+.avatar.s { background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); color:#fff; margin-right: -14px; z-index:1; }
+.avatar-name { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 500; }
+
+/* KPI cards */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.kpi {
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px 18px;
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  transition: background .2s;
+}
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 3px; height: 100%;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.kpi.d::before { background: var(--daniel); opacity: 1; }
+.kpi.s::before { background: var(--shachar); opacity: 1; }
+.kpi.balance::before { background: var(--green); opacity: 1; }
+.kpi.balance.red::before { background: var(--daniel); }
+.kpi.balance.purple::before { background: var(--shachar); }
+.kpi .k-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 10px;
+}
+.kpi .k-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.kpi .k-val .k-unit { font-size: 14px; font-weight: 500; opacity: .5; }
+.kpi .k-sub {
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.3);
+  margin-top: 6px;
+  font-weight: 400;
+}
+.kpi.balance .k-val { color: #6ee7b7; }
+.kpi.balance.red .k-val { color: #fca5a5; }
+.kpi.balance.purple .k-val { color: #c4b5fd; }
+
+/* ─── MAIN ─────────────────────────────────────── */
+main {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
+
+/* Balance alert */
+#bal-alert {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 22px;
+  margin-bottom: 20px;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.bal-icon { font-size: 24px; line-height: 1; }
+.bal-info .bal-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.bal-info .bal-body { font-size: 15.5px; font-weight: 700; color: var(--text-primary); margin-top: 2px; }
+.bal-pill {
+  margin-right: auto;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.bal-pill.red { background: var(--daniel-soft); color: var(--daniel); }
+.bal-pill.purple { background: var(--shachar-soft); color: var(--shachar); }
+.bal-pill.green { background: var(--green-soft); color: var(--green); }
+.btn-settle {
+  padding: 9px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-family: 'Heebo', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.btn-settle:hover { border-color: var(--navy); color: var(--navy); background: var(--surface2); }
+
+/* ─── ADD PANEL ─────────────────────────────────── */
+.add-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.panel-icon {
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.panel-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr 1.1fr 1.5fr auto;
+  gap: 12px;
+  align-items: end;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.field input, .field select {
+  height: 42px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 0 13px;
+  font-family: 'Heebo', sans-serif;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  background: var(--surface2);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s, background .18s;
+  direction: rtl;
+  width: 100%;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--navy);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(15,23,42,0.07);
+}
+.field input::placeholder { color: var(--text-muted); }
+
+/* Payer toggle */
+.payer-toggle {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--surface2);
+  height: 42px;
+}
+.payer-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Heebo', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all .15s;
+  padding: 0 4px;
+}
+.payer-toggle button.on-d { background: var(--daniel); color: #fff; }
+.payer-toggle button.on-s { background: var(--shachar); color: #fff; }
+.payer-toggle button.on-b { background: var(--navy); color: #fff; }
+
+.btn-add {
+  height: 42px;
+  padding: 0 24px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-family: 'Heebo', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .18s, transform .1s, box-shadow .18s;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.25);
+}
+.btn-add:hover { opacity: .9; box-shadow: 0 4px 14px rgba(15,23,42,0.3); }
+.btn-add:active { transform: scale(.97); }
+
+/* ─── TABLE SECTION ──────────────────────────────── */
+.section-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+.section-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--border-light);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-right: 8px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 4px;
+}
+.ftab {
+  padding: 5px 14px;
+  border-radius: 5px;
+  font-family: 'Heebo', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all .15s;
+}
+.ftab.active { background: var(--navy); color: #fff; }
+
+/* Table card */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface2); border-bottom: 1.5px solid var(--border); }
+thead th {
+  padding: 12px 18px;
+  text-align: right;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  transition: background .12s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #fafbff; }
+tbody td { padding: 14px 18px; font-size: 14px; color: var(--text-primary); vertical-align: middle; }
+
+.td-desc .desc-main { font-weight: 700; font-size: 14px; }
+.td-desc .desc-note { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+.cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--border-light);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.amount-val { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+
+/* Payer pill */
+.pp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pp.d { background: var(--daniel-mid); color: var(--daniel); }
+.pp.s { background: var(--shachar-mid); color: var(--shachar); }
+.pp.b { background: var(--both-mid); color: var(--both); }
+.pp-dot { width: 6px; height: 6px; border-radius: 50%; }
+.pp.d .pp-dot { background: var(--daniel); }
+.pp.s .pp-dot { background: var(--shachar); }
+.pp.b .pp-dot { background: var(--both); }
+
+.owes-cell { font-size: 12.5px; }
+.owes-cell .half { color: var(--text-muted); font-weight: 500; }
+.owes-cell .who { font-weight: 700; }
+.owes-cell .who.red { color: var(--daniel); }
+.owes-cell .who.purple { color: var(--shachar); }
+.owes-cell .who.blue { color: var(--both); }
+
+.receipt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  background: var(--green-soft);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.btn-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--border);
+  font-size: 15px;
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-del:hover { color: var(--daniel); background: var(--daniel-soft); }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .e-icon { font-size: 36px; margin-bottom: 10px; opacity: .5; }
+.empty-state p { font-size: 14px; }
+
+/* settled row */
+.settled-row td {
+  background: var(--green-soft) !important;
+  color: var(--green) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 10px 18px !important;
+}
+
+/* ─── BREAKDOWN ──────────────────────────────────── */
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+.breakdown-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.bc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  position: relative;
+  overflow: hidden;
+}
+.bc-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.92;
+}
+.bc-header.d { background: linear-gradient(135deg, #e63946, #9b1c28); }
+.bc-header.s { background: linear-gradient(135deg, #7c3aed, #4c1d95); }
+.bc-header * { position: relative; z-index: 1; }
+.bc-av {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  border: 2px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.bc-name { font-size: 17px; font-weight: 800; color: #fff; }
+.bc-sub { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 400; margin-top: 1px; }
+.bc-total { margin-right: auto; font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+
+.bc-body { padding: 6px 0; }
+.bc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13.5px;
+}
+.bc-row:last-child { border-bottom: none; }
+.bc-row .bc-cat { color: var(--text-secondary); }
+.bc-row .bc-amt { font-weight: 700; color: var(--text-primary); }
+.bc-empty { text-align: center; padding: 22px; font-size: 13px; color: var(--text-muted); }
+
+/* ─── TOAST ──────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--navy);
+  color: #fff;
+  padding: 11px 22px;
+  border-radius: 30px;
+  font-size: 13.5px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── RESPONSIVE ─────────────────────────────────── */
+@media(max-width:900px){
+  .header-inner { padding: 24px 20px 22px; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  main { padding: 20px 16px 40px; }
+  .form-row { grid-template-columns: 1fr 1fr; }
+  .form-row .btn-add { grid-column: span 2; }
+  .breakdown-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- ═══ HEADER ═══════════════════════════════════ -->
+<header>
+  <div class="header-mesh"></div>
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-label">מעקב עסקי</div>
+        <div class="brand-title">הוצאות משותפות <span>/</span> דניאל ושחר</div>
+      </div>
+      <div class="avatars-group">
+        <div class="avatar d">ד</div>
+        <div class="avatar s">ש</div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="k-label">סה"כ הוצאות</div>
+        <div class="k-val" id="kpi-total"><span class="k-unit">₪</span>0</div>
+        <div class="k-sub" id="kpi-count">0 הוצאות רשומות</div>
+      </div>
+      <div class="kpi d">
+        <div class="k-label">דניאל שילם</div>
+        <div class="k-val" id="kpi-daniel"><span class="k-unit">₪</span>0</div>
+        <div class="k-sub" id="kpi-daniel-pct">0% מהסה"כ</div>
+      </div>
+      <div class="kpi s">
+        <div class="k-label">שחר שילם</div>
+        <div class="k-val" id="kpi-shachar"><span class="k-unit">₪</span>0</div>
+        <div class="k-sub" id="kpi-shachar-pct">0% מהסה"כ</div>
+      </div>
+      <div class="kpi balance" id="kpi-bal-card">
+        <div class="k-label">מאזן</div>
+        <div class="k-val" id="kpi-balance">–</div>
+        <div class="k-sub" id="kpi-bal-sub">מחושב אוטומטית</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ MAIN ══════════════════════════════════════ -->
+<main>
+
+  <!-- Balance alert -->
+  <div id="bal-alert">
+    <div class="bal-icon" id="bal-icon">⚖️</div>
+    <div class="bal-info">
+      <div class="bal-title">מאזן נוכחי</div>
+      <div class="bal-body" id="bal-body"></div>
+    </div>
+    <div class="bal-pill" id="bal-pill"></div>
+    <button class="btn-settle" onclick="markSettled()">✓ סגרנו חשבון</button>
+  </div>
+
+  <!-- Add expense -->
+  <div class="add-panel">
+    <div class="panel-header">
+      <div class="panel-icon">+</div>
+      <div class="panel-title">הוספת הוצאה חדשה</div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>תיאור</label>
+        <input type="text" id="inp-desc" placeholder="מה נרכש?" />
+      </div>
+      <div class="field">
+        <label>סכום (₪)</label>
+        <input type="number" id="inp-amount" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="field">
+        <label>מי שילם</label>
+        <div class="payer-toggle">
+          <button id="pt-d" class="on-d" onclick="setPayer('daniel')">דניאל</button>
+          <button id="pt-s" onclick="setPayer('shachar')">שחר</button>
+          <button id="pt-b" onclick="setPayer('both')">שניהם</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>קטגוריה</label>
+        <select id="inp-cat">
+          <option>🎨 עיצוב</option>
+          <option>🔁 ריברנדינג</option>
+          <option>🏪 חנות</option>
+          <option>💼 חשבון עסקי</option>
+          <option>🌐 דומיינים</option>
+          <option>🛠️ כלים דיגיטליים</option>
+          <option>📦 לוגיסטיקה</option>
+          <option>🛒 מזון</option>
+          <option>🏠 דיור</option>
+          <option>⚡ חשבונות</option>
+          <option>📦 אחר</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>הערות</label>
+        <input type="text" id="inp-note" placeholder="הערה, קבלה..." />
+      </div>
+      <button class="btn-add" onclick="addExpense()">הוסף ←</button>
+    </div>
+  </div>
+
+  <!-- Table section -->
+  <div class="section-bar">
+    <div style="display:flex;align-items:center;gap:0;">
+      <span class="section-title">רשימת הוצאות</span>
+      <span class="section-count" id="exp-count">0</span>
+    </div>
+    <div class="filter-tabs">
+      <button class="ftab active" onclick="setFilter('all',this)">הכל</button>
+      <button class="ftab" onclick="setFilter('daniel',this)">דניאל</button>
+      <button class="ftab" onclick="setFilter('shachar',this)">שחר</button>
+      <button class="ftab" onclick="setFilter('both',this)">שניהם</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>תיאור</th>
+          <th>קטגוריה</th>
+          <th>סכום</th>
+          <th>שילם</th>
+          <th>חצי לכל אחד</th>
+          <th>קיזוז</th>
+          <th>תאריך</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Breakdown -->
+  <div class="breakdown-row">
+    <div class="breakdown-card">
+      <div class="bc-header d">
+        <div class="bc-av">ד</div>
+        <div><div class="bc-name">דניאל</div><div class="bc-sub">לפי קטגוריה</div></div>
+        <div class="bc-total" id="bc-d-total">₪0</div>
+      </div>
+      <div class="bc-body" id="bc-d-body"></div>
+    </div>
+    <div class="breakdown-card">
+      <div class="bc-header s">
+        <div class="bc-av">ש</div>
+        <div><div class="bc-name">שחר</div><div class="bc-sub">לפי קטגוריה</div></div>
+        <div class="bc-total" id="bc-s-total">₪0</div>
+      </div>
+      <div class="bc-body" id="bc-s-body"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Seed data (imported from Google Sheets) ──────
+const SEED = [
+  {id:1, desc:'עיצוב גרפי מנוחה',    amount:200, payer:'both',    cat:'🎨 עיצוב',           note:'Z ROYAL עיצוב מותג',   date:'10.5.26'},
+  {id:2, desc:'ציוד ריברנדינג לזיפו', amount:710, payer:'both',    cat:'🔁 ריברנדינג',        note:'',                     date:'20.5.26'},
+  {id:3, desc:'חנות באסטי קרסינג קרב',amount:55,  payer:'both',    cat:'🏪 חנות',             note:'שמרנו קבלות',          date:'20.5.26'},
+  {id:4, desc:'תשלום ל-LLC',          amount:907, payer:'both',    cat:'💼 חשבון עסקי',       note:'חשבון אמריקאי',        date:'21.5.26'},
+  {id:5, desc:'חנות 2 מנגה גייר',     amount:55,  payer:'daniel',  cat:'🏪 חנות',             note:'שמרנו קבלות',          date:'30.5.26'},
+  {id:6, desc:'פרוקסי — 5 דומיינים',  amount:40,  payer:'daniel',  cat:'🌐 דומיינים',         note:'שמרנו קבלות',          date:'2.6.26'},
+  {id:7, desc:'מנוי שנתי ADS POWER',  amount:382, payer:'daniel',  cat:'🛠️ כלים דיגיטליים', note:'שמרנו קבלות',          date:'2.6.26'},
+  {id:8, desc:'18.9$ — תיק וואן פיס', amount:54,  payer:'shachar', cat:'🏪 חנות',             note:'מכירה ראשונה',         date:'2.6.26'},
+];
+
+let expenses = JSON.parse(localStorage.getItem('exp-v3') || 'null');
+if (!expenses) { expenses = SEED.map(e => ({...e})); save(); }
+
+let filter = 'all';
+let currentPayer = 'daniel';
+
+function save() { localStorage.setItem('exp-v3', JSON.stringify(expenses)); }
+
+function fmt(n) {
+  return '₪' + parseFloat(n).toLocaleString('he-IL', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtShort(n) {
+  return parseFloat(n).toLocaleString('he-IL', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function setPayer(p) {
+  currentPayer = p;
+  ['daniel','shachar','both'].forEach(x => {
+    const el = document.getElementById('pt-' + x[0]);
+    el.className = '';
+    if (x === p) el.className = 'on-' + x[0];
+  });
+}
+
+function addExpense() {
+  const desc = document.getElementById('inp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('inp-amount').value);
+  const cat = document.getElementById('inp-cat').value;
+  const note = document.getElementById('inp-note').value.trim();
+  if (!desc) { document.getElementById('inp-desc').focus(); shake('inp-desc'); return; }
+  if (!amount || amount <= 0) { document.getElementById('inp-amount').focus(); shake('inp-amount'); return; }
+  const today = new Date().toLocaleDateString('he-IL', {day:'2-digit',month:'2-digit',year:'2-digit'});
+  expenses.unshift({id:Date.now(), desc, amount, payer:currentPayer, cat, note, date:today});
+  save(); render();
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-amount').value = '';
+  document.getElementById('inp-note').value = '';
+  document.getElementById('inp-desc').focus();
+  toast('✓ הוצאה נוספה בהצלחה');
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--daniel)';
+  el.style.boxShadow = '0 0 0 3px rgba(230,57,70,0.12)';
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 900);
+}
+
+function deleteExpense(id) {
+  if (!confirm('למחוק הוצאה זו?')) return;
+  expenses = expenses.filter(e => e.id !== id);
+  save(); render();
+  toast('🗑 הוצאה נמחקה');
+}
+
+function markSettled() {
+  if (!confirm('לסמן שסגרתם חשבון? (ההוצאות יישארו)')) return;
+  expenses.unshift({id:Date.now(), desc:'✅ סגירת חשבון', amount:0, payer:'both', cat:'📦 אחר', note:'חשבון נסגר', date:new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit'})});
+  save(); render();
+  toast('✅ חשבון סגור — מאזן אופס!');
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function calcTotals() {
+  let total=0, daniel=0, shachar=0;
+  expenses.forEach(e => {
+    if (e.amount === 0) return;
+    total += e.amount;
+    if (e.payer === 'daniel') daniel += e.amount;
+    else if (e.payer === 'shachar') shachar += e.amount;
+    else { daniel += e.amount/2; shachar += e.amount/2; }
+  });
+  return { total, daniel, shachar };
+}
+
+function render() {
+  const { total, daniel, shachar } = calcTotals();
+  const realExpenses = expenses.filter(e => e.amount > 0);
+
+  // KPIs
+  document.getElementById('kpi-total').innerHTML = `<span class="k-unit">₪</span>${fmtShort(total)}`;
+  document.getElementById('kpi-count').textContent = `${realExpenses.length} הוצאות רשומות`;
+  document.getElementById('kpi-daniel').innerHTML = `<span class="k-unit">₪</span>${fmtShort(daniel)}`;
+  document.getElementById('kpi-shachar').innerHTML = `<span class="k-unit">₪</span>${fmtShort(shachar)}`;
+  document.getElementById('kpi-daniel-pct').textContent = total ? Math.round(daniel/total*100) + '% מהסה"כ' : '0% מהסה"כ';
+  document.getElementById('kpi-shachar-pct').textContent = total ? Math.round(shachar/total*100) + '% מהסה"כ' : '0% מהסה"כ';
+
+  // Balance
+  const diff = daniel - shachar;
+  const owes = Math.abs(diff) / 2;
+  const balCard = document.getElementById('kpi-bal-card');
+  const alert = document.getElementById('bal-alert');
+  alert.style.display = 'none';
+
+  if (total === 0) {
+    document.getElementById('kpi-balance').textContent = '–';
+    document.getElementById('kpi-bal-sub').textContent = 'אין הוצאות';
+    balCard.className = 'kpi balance';
+  } else if (Math.abs(diff) < 0.5) {
+    document.getElementById('kpi-balance').textContent = '⚖️ מאוזן';
+    document.getElementById('kpi-bal-sub').textContent = 'חלוקה שווה';
+    balCard.className = 'kpi balance';
+    alert.style.display = 'flex';
+    document.getElementById('bal-icon').textContent = '✅';
+    document.getElementById('bal-body').textContent = 'הכל מאוזן — אין חוב!';
+    const pill = document.getElementById('bal-pill');
+    pill.textContent = 'מאוזן ✓'; pill.className = 'bal-pill green';
+  } else if (diff > 0) {
+    document.getElementById('kpi-balance').innerHTML = `<span class="k-unit">₪</span>${fmtShort(owes)}`;
+    document.getElementById('kpi-bal-sub').textContent = 'שחר חייב לדניאל';
+    balCard.className = 'kpi balance red';
+    alert.style.display = 'flex';
+    document.getElementById('bal-icon').textContent = '🔴';
+    document.getElementById('bal-body').textContent = `שחר חייב לדניאל ${fmt(owes)}`;
+    const pill = document.getElementById('bal-pill');
+    pill.textContent = fmt(owes); pill.className = 'bal-pill red';
+  } else {
+    document.getElementById('kpi-balance').innerHTML = `<span class="k-unit">₪</span>${fmtShort(owes)}`;
+    document.getElementById('kpi-bal-sub').textContent = 'דניאל חייב לשחר';
+    balCard.className = 'kpi balance purple';
+    alert.style.display = 'flex';
+    document.getElementById('bal-icon').textContent = '🟣';
+    document.getElementById('bal-body').textContent = `דניאל חייב לשחר ${fmt(owes)}`;
+    const pill = document.getElementById('bal-pill');
+    pill.textContent = fmt(owes); pill.className = 'bal-pill purple';
+  }
+
+  // Table
+  const filtered = filter === 'all' ? expenses : expenses.filter(e => e.payer === filter);
+  document.getElementById('exp-count').textContent = filtered.filter(e=>e.amount>0).length;
+  const tbody = document.getElementById('tbody');
+
+  if (!filtered.filter(e=>e.amount>0||e.desc.includes('✅')).length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="e-icon">📋</div><p>אין הוצאות להצגה</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map(e => {
+      if (e.amount === 0) return `<tr class="settled-row"><td colspan="8">${e.desc} — ${e.date}</td></tr>`;
+      const half = e.amount / 2;
+      const pcls = e.payer === 'daniel' ? 'd' : e.payer === 'shachar' ? 's' : 'b';
+      const pname = e.payer === 'daniel' ? 'דניאל' : e.payer === 'shachar' ? 'שחר' : 'שניהם';
+      let owesHtml;
+      if (e.payer === 'daniel') owesHtml = `<span class="who red">שחר חייב ${fmt(half)}</span>`;
+      else if (e.payer === 'shachar') owesHtml = `<span class="who purple">דניאל חייב ${fmt(half)}</span>`;
+      else owesHtml = `<span class="who blue">שווה — ${fmt(half)} כ"א ✓</span>`;
+      const hasReceipt = e.note && (e.note.includes('קבלה') || e.note.includes('קבלות'));
+      return `<tr>
+        <td class="td-desc">
+          <div class="desc-main">${e.desc}</div>
+          ${e.note ? `<div class="desc-note">${e.note}</div>` : ''}
+        </td>
+        <td><span class="cat-badge">${e.cat}</span></td>
+        <td><span class="amount-val">${fmt(e.amount)}</span></td>
+        <td><span class="pp ${pcls}"><span class="pp-dot"></span>${pname}</span></td>
+        <td class="owes-cell"><span class="half">${fmt(half)} · </span>${owesHtml}</td>
+        <td>${hasReceipt ? '<span class="receipt-chip">🧾 קבלה</span>' : '<span style="color:var(--border);font-size:12px;">—</span>'}</td>
+        <td style="color:var(--text-muted);font-size:12.5px;font-weight:500;">${e.date}</td>
+        <td><button class="btn-del" onclick="deleteExpense(${e.id})">✕</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Breakdown
+  renderBreakdown('daniel', 'd');
+  renderBreakdown('shachar', 's');
+}
+
+function renderBreakdown(person, pfx) {
+  const cats = {};
+  let total = 0;
+  expenses.forEach(e => {
+    if (e.amount === 0) return;
+    const amt = e.payer === person ? e.amount : e.payer === 'both' ? e.amount/2 : 0;
+    if (!amt) return;
+    total += amt;
+    cats[e.cat] = (cats[e.cat]||0) + amt;
+  });
+  document.getElementById(`bc-${pfx}-total`).textContent = fmt(total);
+  const entries = Object.entries(cats).sort((a,b) => b[1]-a[1]);
+  const body = document.getElementById(`bc-${pfx}-body`);
+  if (!entries.length) {
+    body.innerHTML = '<div class="bc-empty">אין הוצאות</div>';
+    return;
+  }
+  body.innerHTML = entries.map(([cat, amt]) =>
+    `<div class="bc-row"><span class="bc-cat">${cat}</span><span class="bc-amt">${fmt(amt)}</span></div>`
+  ).join('');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && ['inp-desc','inp-amount','inp-note'].includes(e.target.id)) addExpense();
+});
+
+render();
+</script>
+</body>
+</html>
