@@ -750,13 +750,13 @@ const SEED = [
   {id:1,  desc:'עיצוב גרפי מנוחה',                        amount:200,  payer:'both',    cat:'🎨 עיצוב',            note:'Z ROYAL עיצוב מותג',                                     date:'10.5.26'},
 ];
 
-let expenses = JSON.parse(localStorage.getItem('exp-v4') || 'null');
+let expenses = JSON.parse(localStorage.getItem('exp-v5') || 'null');
 if (!expenses) { expenses = SEED.map(e => ({...e})); save(); }
 
 let filter = 'all';
 let currentPayer = 'daniel';
 
-function save() { localStorage.setItem('exp-v4', JSON.stringify(expenses)); }
+function save() { localStorage.setItem('exp-v5', JSON.stringify(expenses)); }
 
 function fmt(n) {
   return '₪' + parseFloat(n).toLocaleString('he-IL', {minimumFractionDigits:2, maximumFractionDigits:2});
