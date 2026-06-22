@@ -598,7 +598,7 @@ function switchBoard(b){
 }
 async function loadShops(){ const r = await fbGet(getBoardConfig()); shops = Array.isArray(r) ? r : []; renderShopModal(); renderShopsSidebar(); }
 let _pendingWrite = false;
-const dk  = d => d.toISOString().split('T')[0];
+const dk  = d => { const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; };
 const mkD = (y,m,d) => { const dt=new Date(y,m,d); dt.setHours(0,0,0,0); return dt; };
 
 function setSyncStatus(state, key){ document.getElementById('syncDot').className='sync-dot '+state; document.getElementById('syncLbl').textContent=tx()[key]||key; }
