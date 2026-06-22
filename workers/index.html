@@ -608,7 +608,7 @@ const localKey = d => 'wb_'+currentBoard+'_'+dk(d);
 const getLocal = d => { try{ const v=localStorage.getItem(localKey(d)); return v?JSON.parse(v):{tasks:{},custom:[]}; }catch{ return{tasks:{},custom:[]}; } };
 const setLocal = (d,v) => { try{ localStorage.setItem(localKey(d),JSON.stringify(v)); }catch{} };
 function mergeDay(local,remote){ const mc=(l,r)=>{const ids=new Set(r.map(t=>t.id));return[...r,...l.filter(t=>!ids.has(t.id))]}; return{tasks:{...remote.tasks,...local.tasks},custom:mc(local.custom||[],remote.custom||[]),hidden:[...new Set([...(local.hidden||[]),...(remote.hidden||[])])]}; }
-async function loadDay(d){ if(!_pendingWrite){ const r=await fbGet(getBoardPath()+'/'+dk(d)); if(r){ setLocal(d,r); return r; } } return getLocal(d); }
+async function loadDay(d){ if(!_pendingWrite){ const r=await fbGet(getBoardPath()+'/'+dk(d)); if(r){ if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[]; setLocal(d,r); return r; } } return getLocal(d); }
 function saveDay(d,data){ setLocal(d,data); fbSet(getBoardPath()+'/'+dk(d),data); }
 
 // ═══ STATE ═══
