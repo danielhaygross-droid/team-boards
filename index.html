@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לוח משימות</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --bg:#F2F1ED;--surface:#FFFFFF;--s2:#F7F6F3;--s3:#EEEDE9;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.14);
+  --text:#111110;--t2:#6B6A67;--t3:#A8A7A3;
+  --blue:#1A6FBF;--blue-l:#EBF4FF;--blue-b:#BDD7F5;
+  --purple:#5B4FCF;--purple-l:#EFEDFD;--purple-b:#CAC4F0;
+  --green:#2E6E0E;--green-l:#EAF4DF;--green-b:#B8DDA0;
+  --amber:#8A5500;--amber-l:#FEF3DC;--amber-b:#F5CC7A;
+  --red:#B53030;--red-l:#FDECEC;--red-b:#F4BBBB;
+  --teal:#0A6B5A;--teal-l:#E2F5F1;--teal-b:#9FE0D3;
+  --r:8px;--r2:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--s3);border-radius:10px}
+
+/* ── SETUP MODAL ── */
+.setup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.setup-box{background:var(--surface);border-radius:16px;padding:28px;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.setup-logo{font-size:28px;margin-bottom:12px}
+.setup-title{font-size:18px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.setup-sub{font-size:13px;color:var(--t2);margin-bottom:20px;line-height:1.6}
+.setup-steps{background:var(--s2);border-radius:var(--r2);padding:14px 16px;margin-bottom:20px}
+.setup-step{display:flex;gap:10px;padding:5px 0;font-size:12.5px;color:var(--text);align-items:flex-start}
+.setup-step-n{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.setup-step-t{line-height:1.5}
+.setup-step-t b{color:var(--blue)}
+.setup-url-label{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.setup-input{width:100%;border:1.5px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-size:13px;font-family:inherit;color:var(--text);background:var(--s2);outline:none;transition:border-color .15s;margin-bottom:8px;direction:ltr;text-align:left}
+.setup-input:focus{border-color:var(--blue);background:var(--surface)}
+.setup-input::placeholder{color:var(--t3);direction:rtl;text-align:right}
+.setup-local{font-size:12px;color:var(--t3);margin-bottom:16px;cursor:pointer;text-decoration:underline}
+.setup-local:hover{color:var(--t2)}
+.setup-btn{width:100%;padding:11px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;transition:background .15s}
+.setup-btn:hover{background:#155a9e}
+.setup-note{font-size:11px;color:var(--t3);text-align:center;margin-top:10px}
+
+/* ── SYNC STATUS ── */
+.sync-badge{position:fixed;bottom:16px;right:16px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);z-index:100;direction:rtl}
+.sync-dot{width:7px;height:7px;border-radius:50%}
+.sync-dot.ok{background:var(--green)}
+.sync-dot.sync{background:var(--amber);animation:pulse .8s infinite}
+.sync-dot.off{background:var(--t3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── HEADER ── */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200}
+.hdr-inner{max-width:1120px;margin:0 auto;padding:0 24px;height:54px;display:flex;align-items:center;gap:14px}
+.logo{font-size:13px;font-weight:600;color:var(--text);letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+.date-nav{display:flex;align-items:center;gap:6px;margin:0 auto}
+.nav-arr{width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--t2);display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s}
+.nav-arr:hover{background:var(--s2)}
+.date-box{text-align:center;min-width:170px}
+.date-main{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.02em}
+.date-rel{font-size:11px;color:var(--t3);margin-top:1px}
+.btn-today{font-size:11px;font-weight:500;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--t2);transition:all .12s}
+.btn-today:hover{background:var(--s2);color:var(--text)}
+.vtabs{display:flex;gap:2px;background:var(--s2);border-radius:8px;padding:2px;margin-right:auto}
+.vtab{font-size:12px;font-weight:500;padding:4px 12px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--t2);transition:all .15s}
+.vtab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1120px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:1fr 290px;gap:18px}
+@media(max-width:760px){.wrap{grid-template-columns:1fr;padding:14px}.side{order:-1}}
+
+/* ── BANNER ── */
+.day-banner{border-radius:var(--r2);padding:13px 16px;display:flex;align-items:center;gap:11px;margin-bottom:14px;border:1px solid transparent}
+.db-icon{font-size:24px;line-height:1}
+.db-title{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.db-sub{font-size:11px;margin-top:2px;opacity:.7}
+.db-gym{background:var(--green-l);border-color:var(--green-b)}.db-gym .db-title,.db-gym .db-sub{color:var(--green)}
+.db-regular{background:var(--blue-l);border-color:var(--blue-b)}.db-regular .db-title,.db-regular .db-sub{color:var(--blue)}
+.db-short{background:var(--amber-l);border-color:var(--amber-b)}.db-short .db-title,.db-short .db-sub{color:var(--amber)}
+.db-rest{background:var(--s2);border-color:var(--border)}.db-rest .db-title{color:var(--t2)}.db-rest .db-sub{color:var(--t3)}
+
+/* ── CHIPS ── */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;border:1px solid transparent;white-space:nowrap}
+.ch-gym{background:var(--green-l);color:var(--green);border-color:var(--green-b)}
+.ch-work{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b)}
+.ch-learn{background:var(--purple-l);color:var(--purple);border-color:var(--purple-b)}
+.ch-break{background:var(--s2);color:var(--t2);border-color:var(--border2)}
+.ch-warn{background:var(--red-l);color:var(--red);border-color:var(--red-b)}
+
+/* ── PROGRESS ── */
+.prog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.prog-label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.06em;text-transform:uppercase}
+.prog-count{font-size:11px;color:var(--t3)}
+.prog-bar{height:3px;background:var(--s3);border-radius:3px;margin-bottom:14px}
+.prog-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s ease}
+
+/* ── TASKS ── */
+.task-list{display:flex;flex-direction:column;gap:6px}
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.tc:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.tc.done{opacity:.55}.tc.done .tc-title{text-decoration:line-through;color:var(--t2)}
+.tc-row{display:flex;align-items:flex-start;gap:11px;padding:11px 14px;cursor:pointer;user-select:none}
+.chk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;background:var(--surface)}
+.chk:hover{border-color:var(--green)}
+.tc.done .chk{background:var(--green);border-color:var(--green)}
+.chk svg{display:none}.tc.done .chk svg{display:block}
+.tc-body{flex:1;min-width:0}
+.tc-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.35;letter-spacing:-.01em}
+.tc-desc{font-size:11.5px;color:var(--t3);margin-top:3px;line-height:1.5}
+.tc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.badge{font-size:10px;font-weight:600;letter-spacing:.03em;padding:2px 7px;border-radius:20px;text-transform:uppercase}
+.b-etsy{background:var(--blue-l);color:var(--blue)}
+.b-shopify{background:var(--purple-l);color:var(--purple)}
+.b-learn{background:var(--teal-l);color:var(--teal)}
+.b-gym{background:var(--green-l);color:var(--green)}
+.b-plan{background:var(--amber-l);color:var(--amber)}
+.b-china{background:var(--red-l);color:var(--red)}
+.b-admin{background:var(--s2);color:var(--t2)}
+.b-alert{background:var(--red-l);color:var(--red)}
+.expand-arr{font-size:10px;color:var(--t3);margin-top:2px;transition:transform .2s}
+.tc.open .expand-arr{transform:rotate(180deg)}
+.tc-notes{display:none;padding:0 14px 12px}
+.tc.open .tc-notes{display:block}
+.notes-ta{width:100%;min-height:64px;border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;font-size:12.5px;font-family:inherit;color:var(--text);background:var(--s2);resize:vertical;direction:rtl;outline:none;line-height:1.6;transition:border-color .15s}
+.notes-ta:focus{border-color:var(--blue);background:var(--surface)}
+.notes-ta::placeholder{color:var(--t3)}
+.del-btn{width:20px;height:20px;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:color .12s}
+.del-btn:hover{color:var(--red)}
+.edit-btn{width:20px;height:20px;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:color .12s}
+.edit-btn:hover{color:var(--blue)}
+.tc-edit{display:none;padding:0 14px 12px;flex-direction:column;gap:7px}
+.tc.editing .tc-edit{display:flex}
+.tc.editing .tc-notes{display:none}
+.edit-save{padding:6px 14px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:500;font-family:inherit;cursor:pointer}
+.edit-cancel{padding:6px 12px;border-radius:var(--r);border:1px solid var(--border2);background:transparent;color:var(--t2);font-size:12px;font-family:inherit;cursor:pointer}
+
+/* ── ADD TASK ── */
+.add-btn{width:100%;margin-top:8px;padding:10px 14px;border:1.5px dashed var(--border2);border-radius:var(--r2);background:transparent;color:var(--t3);font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.add-btn:hover{background:var(--surface);color:var(--t2)}
+.add-form{background:var(--surface);border:1.5px solid var(--blue-b);border-radius:var(--r2);padding:13px 14px;margin-top:8px;display:none}
+.add-form.open{display:block}
+.ai{width:100%;border:1px solid var(--border2);border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:inherit;color:var(--text);background:var(--s2);margin-bottom:8px;direction:rtl;outline:none;transition:border-color .15s}
+.ai:focus{border-color:var(--blue);background:var(--surface)}
+.ai::placeholder{color:var(--t3)}
+.asel{border:1px solid var(--border2);border-radius:var(--r);padding:6px 9px;font-size:12px;background:var(--s2);color:var(--text);margin-bottom:10px;direction:rtl;outline:none;width:100%}
+.form-row{display:flex;gap:7px}
+.btn-prim{padding:7px 18px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;font-size:12.5px;font-weight:500;font-family:inherit;cursor:pointer}
+.btn-prim:hover{background:#155a9e}
+.btn-sec{padding:7px 14px;border-radius:var(--r);border:1px solid var(--border2);background:transparent;color:var(--t2);font-size:12.5px;font-family:inherit;cursor:pointer}
+.btn-sec:hover{background:var(--s2)}
+
+/* ── WEEK ── */
+.week-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media(max-width:900px){.week-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:500px){.week-grid{grid-template-columns:repeat(2,1fr)}}
+.wdc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 13px;cursor:pointer;transition:all .15s}
+.wdc:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.wdc.today-wdc{border-color:var(--blue);border-width:1.5px}
+.wdc-name{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.04em;text-transform:uppercase}
+.wdc-date{font-size:12px;font-weight:600;color:var(--text);margin-top:2px;margin-bottom:9px}
+.wdc-task{display:flex;align-items:center;gap:6px;padding:2px 0}
+.wdc-chk{width:9px;height:9px;border-radius:2px;border:1px solid var(--border2);flex-shrink:0}
+.wdc-chk.d{background:var(--green);border-color:var(--green)}
+.wdc-tlabel{font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wdc-more{font-size:10px;color:var(--t3);margin-top:3px}
+.wdc-bar{margin-top:9px;height:2px;background:var(--s3);border-radius:2px}
+.wdc-bfill{height:100%;background:var(--green);border-radius:2px}
+.wdc-pct{font-size:10px;color:var(--t3);margin-top:4px}
+
+/* ── SIDEBAR ── */
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:12px}
+.scard-title{font-size:10.5px;font-weight:700;color:var(--t2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:11px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.cal-mname{font-size:13px;font-weight:600;color:var(--text)}
+.cal-arr{width:24px;height:24px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:12px;color:var(--t2)}
+.cal-arr:hover{background:var(--s2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-lbl{font-size:10px;color:var(--t3);text-align:center;padding:2px 0}
+.cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:5px;cursor:pointer;color:var(--t2);transition:background .12s;position:relative}
+.cal-d:hover{background:var(--s2)}
+.cal-d.c-today{background:var(--blue);color:#fff;font-weight:700}
+.cal-d.c-view{background:var(--blue-l);color:var(--blue);font-weight:600}
+.cal-d.c-other{color:var(--t3)}
+.cal-d.c-done::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--green)}
+.cal-d.c-today.c-done::after{background:#fff}
+.goal-row{display:flex;gap:9px;padding:6px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.goal-row:last-child{border-bottom:none;padding-bottom:0}
+.gdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.gdot.blue{background:var(--blue)}.gdot.purple{background:var(--purple)}.gdot.green{background:var(--green)}.gdot.amber{background:var(--amber)}.gdot.red{background:var(--red)}
+.goal-txt{font-size:12px;color:var(--text);line-height:1.4}
+.goal-sub{font-size:10.5px;color:var(--t3);margin-top:1px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.kbox{background:var(--s2);border-radius:var(--r);padding:9px 11px}
+.kval{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.03em}
+.klbl{font-size:10px;color:var(--t3);margin-top:2px}
+
+.toast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--text);color:#fff;padding:8px 18px;border-radius:20px;font-size:12.5px;font-weight:500;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:999}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.dv{display:none}.dv.active{display:block}
+.wv{display:none}.wv.active{display:block}
+
+/* ── MOVE MENU ── */
+.move-btn{width:20px;height:20px;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:color .12s}
+.move-btn:hover{color:var(--blue)}
+#moveMenu{position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);box-shadow:0 6px 20px rgba(0,0,0,.14);padding:5px;z-index:500;min-width:150px;display:none}
+#moveMenu.open{display:block}
+.move-opt{padding:8px 12px;border-radius:var(--r);font-size:13px;cursor:pointer;color:var(--text);white-space:nowrap;transition:background .1s;display:flex;align-items:center;gap:8px}
+.move-opt:hover{background:var(--blue-l);color:var(--blue)}
+.move-sep{height:1px;background:var(--border);margin:4px 0}
+</style>
+</head>
+<body>
+
+<!-- SETUP MODAL -->
+<div class="setup-overlay" id="setupOverlay" style="display:none">
+  <div class="setup-box">
+    <div class="setup-logo">🔥</div>
+    <div class="setup-title">חיבור לסנכרון משותף</div>
+    <div class="setup-sub">כדי שאתה והשותף תראו אותו לוח — צריך להכניס את ה-Firebase Database URL. זה חינמי ולוקח 2 דקות.</div>
+    <div class="setup-steps">
+      <div class="setup-step"><div class="setup-step-n">1</div><div class="setup-step-t">נכנס ל-<b>console.firebase.google.com</b></div></div>
+      <div class="setup-step"><div class="setup-step-n">2</div><div class="setup-step-t">לחץ <b>"Add project"</b> → שם → המשך → צור פרויקט</div></div>
+      <div class="setup-step"><div class="setup-step-n">3</div><div class="setup-step-t">מצד שמאל: <b>Build → Realtime Database → Create</b> → בחר "test mode"</div></div>
+      <div class="setup-step"><div class="setup-step-n">4</div><div class="setup-step-t">העתק את ה-URL שנראה כך:<br><b>https://שם-default-rtdb.firebaseio.com</b></div></div>
+    </div>
+    <div class="setup-url-label">הדבק את ה-Firebase URL כאן:</div>
+    <input class="setup-input" id="fbUrlInput" placeholder="https://my-project-default-rtdb.firebaseio.com" />
+    <div class="setup-local" onclick="useLocal()">→ להמשיך ללא סנכרון (שמירה מקומית בלבד)</div>
+    <button class="setup-btn" onclick="connectFirebase()">התחבר ✓</button>
+    <div class="setup-note">לאחר ההגדרה, שלח את אותו URL לשותף — הוא יכניס אותו גם אצלו</div>
+  </div>
+</div>
+
+<!-- SYNC BADGE -->
+<div class="sync-badge" id="syncBadge" style="display:none">
+  <div class="sync-dot off" id="syncDot"></div>
+  <span id="syncLabel">לא מחובר</span>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="logo"><div class="logo-dot"></div>לוח משימות</div>
+    <div class="date-nav">
+      <button class="nav-arr" onclick="shiftDay(-1)">›</button>
+      <div class="date-box">
+        <div class="date-main" id="hDate">—</div>
+        <div class="date-rel" id="hRel">—</div>
+      </div>
+      <button class="nav-arr" onclick="shiftDay(1)">‹</button>
+    </div>
+    <button class="btn-today" onclick="goToday()">היום</button>
+    <div class="vtabs">
+      <button class="vtab active" onclick="setView('day',this)">יום</button>
+      <button class="vtab" onclick="setView('week',this)">שבוע</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="dv active" id="dv">
+      <div id="banner"></div>
+      <div id="chips"></div>
+      <div class="prog-row"><span class="prog-label">משימות</span><span class="prog-count" id="pCount">0/0</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="pFill" style="width:0%"></div></div>
+      <div class="task-list" id="tasks"></div>
+      <div class="add-form" id="addForm">
+        <input class="ai" id="aTitle" placeholder="שם המשימה..." />
+        <input class="ai" id="aDesc" placeholder="פרטים (אופציונלי)..." />
+        <select class="asel" id="aCat">
+          <option value="etsy">Etsy</option><option value="shopify">Shopify</option>
+          <option value="learn">לימוד</option><option value="plan">תכנון</option>
+          <option value="china">סין / זיפו</option><option value="admin">אדמין</option><option value="gym">אימון</option>
+        </select>
+        <div class="form-row"><button class="btn-prim" onclick="addTask()">הוסף</button><button class="btn-sec" onclick="hideForm()">ביטול</button></div>
+      </div>
+      <button class="add-btn" onclick="showForm()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        הוסף משימה
+      </button>
+    </div>
+    <div class="wv" id="wv"><div class="week-grid" id="wGrid"></div></div>
+  </div>
+
+  <aside class="side">
+    <div class="scard">
+      <div class="cal-head"><button class="cal-arr" onclick="cPrev()">›</button><div class="cal-mname" id="cMonth"></div><button class="cal-arr" onclick="cNext()">‹</button></div>
+      <div class="cal-grid" id="cal"></div>
+    </div>
+    <div class="scard">
+      <div class="scard-title">יעדי יוני–יולי</div>
+      <div class="goal-row"><div class="gdot red"></div><div><div class="goal-txt">לקנות מנוי חדר כושר</div><div class="goal-sub">השבוע!</div></div></div>
+      <div class="goal-row"><div class="gdot blue"></div><div><div class="goal-txt">2 חנויות Etsy חדשות</div><div class="goal-sub">עד 30.06</div></div></div>
+      <div class="goal-row"><div class="gdot purple"></div><div><div class="goal-txt">Shopify זיפו — פתיחה</div><div class="goal-sub">עד 30.06</div></div></div>
+      <div class="goal-row"><div class="gdot green"></div><div><div class="goal-txt">קורס Etsy — 75%</div><div class="goal-sub">עד 30.06</div></div></div>
+      <div class="goal-row"><div class="gdot blue"></div><div><div class="goal-txt">₪1,000+ הכנסה</div><div class="goal-sub">עד 30.07</div></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-title">יעדי Q3</div>
+      <div class="goal-row"><div class="gdot blue"></div><div><div class="goal-txt">5–10 חנויות Etsy</div></div></div>
+      <div class="goal-row"><div class="gdot purple"></div><div><div class="goal-txt">Shopify זיפו — לייב</div></div></div>
+      <div class="goal-row"><div class="gdot red"></div><div><div class="goal-txt">נסיעה לסין — ספטמבר</div></div></div>
+      <div class="goal-row"><div class="gdot green"></div><div><div class="goal-txt">₪5,000–₪10,000/חודש</div></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-title">סטטוס</div>
+      <div class="kpi-grid">
+        <div class="kbox"><div class="kval" id="kToday">0</div><div class="klbl">הושלם היום</div></div>
+        <div class="kbox"><div class="kval" id="kStreak">0</div><div class="klbl">ימים רצופים</div></div>
+        <div class="kbox"><div class="kval" id="kWeek">0</div><div class="klbl">השבוע</div></div>
+        <div class="kbox"><div class="kval" id="kGym">0</div><div class="klbl">אימונים</div></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MOVE MENU -->
+<div id="moveMenu" onclick="event.stopPropagation()"></div>
+
+<script>
+// ═══════ MOVE TASK ═══════
+const _taskMap={};
+let _moveCtx=null;
+
+function openMoveMenu(id,customIdx,btn){
+  e=event;e.stopPropagation();
+  const t=_taskMap[id];if(!t)return;
+  _moveCtx={id,title:t.title,desc:t.desc||'',cat:t.cat,isCustom:!!t._c,customIdx};
+  const menu=document.getElementById('moveMenu');
+  const opts=[];
+  const tomorrow=new Date(cur);tomorrow.setDate(cur.getDate()+1);
+  opts.push(`<div class="move-opt" onclick="doMoveTask(${tomorrow.getTime()})">➡️ יום הבא (${tomorrow.getDate()}.${tomorrow.getMonth()+1})</div>`);
+  const nw=new Date(cur);nw.setDate(cur.getDate()+7);
+  opts.push(`<div class="move-opt" onclick="doMoveTask(${nw.getTime()})">📅 שבוע הבא (${nw.getDate()}.${nw.getMonth()+1})</div>`);
+  opts.push('<div class="move-sep"></div>');
+  const sun=new Date(cur);sun.setDate(cur.getDate()-cur.getDay());
+  for(let i=0;i<6;i++){const d=new Date(sun);d.setDate(sun.getDate()+i);if(d.getTime()>cur.getTime())opts.push(`<div class="move-opt" onclick="doMoveTask(${d.getTime()})">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth()+1}</div>`);}
+  menu.innerHTML=opts.join('');
+  const r=btn.getBoundingClientRect();
+  menu.style.top=(r.bottom+4)+'px';
+  menu.style.right=(window.innerWidth-r.right)+'px';
+  menu.style.left='auto';
+  menu.classList.add('open');
+}
+
+function closeMoveMenu(){document.getElementById('moveMenu').classList.remove('open');_moveCtx=null;}
+
+function doMoveTask(ts){
+  const ctx=_moveCtx;closeMoveMenu();
+  const target=new Date(ts);target.setHours(0,0,0,0);
+  const tdd=getLocal(target);if(!tdd.custom)tdd.custom=[];
+  tdd.custom.push({id:'c'+Date.now(),title:ctx.title,desc:ctx.desc,cat:ctx.cat});
+  sdd(target,tdd);
+  const cdd=getLocal(cur);if(!cdd.hidden)cdd.hidden=[];
+  if(!ctx.isCustom){cdd.hidden.push(ctx.id);}else{cdd.custom.splice(ctx.customIdx,1);}
+  sdd(cur,cdd);renderDay();
+  const dayName=DAYS[target.getDay()];
+  toast(`✓ הועבר ל${dayName} ${target.getDate()}.${target.getMonth()+1}`);
+}
+
+document.addEventListener('click',()=>closeMoveMenu());
+
+// ═══════ DATA ═══════
+const DAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const CLABELS={etsy:'Etsy',shopify:'Shopify',learn:'לימוד',gym:'אימון',plan:'תכנון',china:'סין',admin:'אדמין',alert:'⚠️'};
+
+const W={
+  0:{type:'regular',banner:{icon:'📋',title:'תכנון + Etsy SEO',sub:'ראשון — יום עבודה מלא',cls:'db-regular'},
+    chips:[{c:'ch-break',t:'9:00 סנכרון'},{c:'ch-work',t:'9:30–13:00 תכשיטים'},{c:'ch-break',t:'13:30 צהריים'},{c:'ch-learn',t:'14:30 לימוד'},{c:'ch-work',t:'15:30 נישה'},{c:'ch-break',t:'18:30 הפסקה'}],
+    tasks:[
+      {id:'s0_1',title:'תכנון שבועי + סנכרון',desc:'מה הושג שבוע שעבר? 3 יעדי השבוע',cat:'plan'},
+      {id:'s0_g1',title:'🎨 הכנת גרפיקות — 2+ תמונות',desc:'Canva / Photoshop: תמונות מוצר לחנויות',cat:'etsy'},
+      {id:'s0_g2',title:'📦 העלאת 2+ מוצרים לחנויות',desc:'listings קיימים — תמונות, מחיר, תגיות',cat:'etsy'},
+      {id:'s0_2',title:'eRank — 10 listings תכשיטים',desc:'זהה 5 listings חלשים, שפר כותרת + תגיות',cat:'etsy'},
+      {id:'s0_3',title:'מחקר נישה לחנויות חדשות',desc:'קלוד + eRank: 3 נישות עם ביקוש 1K–10K',cat:'etsy'},
+      {id:'s0_4',title:'🍽️ צהריים — 13:30',desc:'הפסקה קבועה',cat:'admin'},
+      {id:'s0_5',title:'לימוד: eRank + Etsy SEO',desc:'14:30 קבוע. יישם על החנות',cat:'learn'},
+      {id:'s0_L',title:'📝 סיכום שיעור בקלוד',desc:'העתק לקלוד: "סכם מה למדתי היום על [נושא] ותן לי 3 נקודות לשימוש בחנויות חדשות"',cat:'learn'},
+      {id:'s0_6',title:'🌙 סיכום יום + תכנון מחר',desc:'מה הושלם? מה נשאר? 3 משימות ל"מחר"',cat:'plan'}
+    ]},
+  1:{type:'gym',banner:{icon:'💪',title:'אימון + חנויות Etsy',sub:'שני — פרוקסי + EtzyPower',cls:'db-gym'},
+    chips:[{c:'ch-gym',t:'8:00 חדר כושר'},{c:'ch-work',t:'10:00–13:00 חנות חדשה'},{c:'ch-break',t:'13:30 צהריים'},{c:'ch-learn',t:'14:30 קורס Etsy'},{c:'ch-work',t:'15:30 listings'},{c:'ch-break',t:'17:30 הפסקה'}],
+    tasks:[
+      {id:'s1_0',title:'💪 חדר כושר — 8:00',desc:'לצאת לפני שהיום מתחיל',cat:'gym'},
+      {id:'s1_1',title:'הקמת חנות Etsy חדשה',desc:'פרוקסי + EtzyPower + חשבון + Shipping policy',cat:'etsy'},
+      {id:'s1_g1',title:'🎨 הכנת גרפיקות — 2+ תמונות',desc:'תמונות מוצר לחנויות הקיימות',cat:'etsy'},
+      {id:'s1_g2',title:'📦 העלאת 2+ מוצרים לחנויות',desc:'listings לחנויות הקיימות',cat:'etsy'},
+      {id:'s1_2',title:'10 listings ראשונים לחנות החדשה',desc:'קלוד: title + description + tags',cat:'etsy'},
+      {id:'s1_4b',title:'🍽️ צהריים — 13:30',desc:'הפסקה קבועה',cat:'admin'},
+      {id:'s1_3',title:'לימוד: קורס Etsy',desc:'14:30 — תגיות ואיך לא להיחסם',cat:'learn'},
+      {id:'s1_L',title:'📝 סיכום שיעור בקלוד',desc:'העתק לקלוד: "סכם מה למדתי היום על [נושא] ותן לי 3 נקודות לשימוש בחנויות חדשות"',cat:'learn'},
+      {id:'s1_end',title:'🌙 סיכום יום + תכנון מחר',desc:'מה הושלם? מה נשאר? 3 משימות למחר',cat:'plan'}
+    ]},
+  2:{type:'regular',banner:{icon:'🏪',title:'חנויות Etsy + Shopify',sub:'שלישי — יום עבודה מלא',cls:'db-regular'},
+    chips:[{c:'ch-break',t:'9:00 סנכרון'},{c:'ch-work',t:'9:30–13:00 listings'},{c:'ch-break',t:'13:30 צהריים'},{c:'ch-learn',t:'14:30 שופיפיי'},{c:'ch-work',t:'15:30 Shopify'},{c:'ch-break',t:'18:30 הפסקה'}],
+    tasks:[
+      {id:'s2_g1',title:'🎨 הכנת גרפיקות — 2+ תמונות',desc:'תמונות מוצר לחנויות',cat:'etsy'},
+      {id:'s2_g2',title:'📦 העלאת 2+ מוצרים לחנויות',desc:'listings לחנויות הקיימות',cat:'etsy'},
+      {id:'s2_1',title:'חנות Etsy — 20+ listings',desc:'תמונות, מחירים, פוליסות',cat:'etsy'},
+      {id:'s2_lunch',title:'🍽️ צהריים — 13:30',desc:'הפסקה קבועה',cat:'admin'},
+      {id:'s2_2',title:'לימוד: קורס Shopify',desc:'14:30 — המשך',cat:'learn'},
+      {id:'s2_L',title:'📝 סיכום שיעור בקלוד',desc:'העתק לקלוד: "סכם מה למדתי היום על [נושא] ותן לי 3 נקודות לשימוש בחנויות חדשות"',cat:'learn'},
+      {id:'s2_3',title:'Shopify זיפו — בנייה',desc:'קטלוג, דפי מוצר, homepage',cat:'shopify'},
+      {id:'s2_4',title:'קלוד — מבנה אתר זיפו',desc:'"בנה מבנה Shopify למותג זיפו מצתים"',cat:'shopify'},
+      {id:'s2_end',title:'🌙 סיכום יום + תכנון מחר',desc:'מה הושלם? מה נשאר? 3 משימות למחר',cat:'plan'}
+    ]},
+  3:{type:'short',banner:{icon:'⚡',title:'אימון — יציאה 17:00',sub:'רביעי — לסיים הכל עד 16:30',cls:'db-short'},
+    chips:[{c:'ch-gym',t:'8:00 חדר כושר'},{c:'ch-work',t:'10:00–13:00 Shopify'},{c:'ch-break',t:'13:30 צהריים'},{c:'ch-learn',t:'14:30 קלוד'},{c:'ch-work',t:'15:00–16:30 סין'},{c:'ch-warn',t:'⚠️ יציאה 17:00'}],
+    tasks:[
+      {id:'s3_0',title:'💪 חדר כושר — 8:00',desc:'לחזור עד 9:30',cat:'gym'},
+      {id:'s3_g1',title:'🎨 הכנת גרפיקות — 2+ תמונות',desc:'תמונות מוצר לחנויות',cat:'etsy'},
+      {id:'s3_g2',title:'📦 העלאת 2+ מוצרים לחנויות',desc:'listings לחנויות הקיימות',cat:'etsy'},
+      {id:'s3_1',title:'Shopify זיפו — בנייה',desc:'קלוד: קטלוג, דפי מוצר, homepage',cat:'shopify'},
+      {id:'s3_lunch',title:'🍽️ צהריים — 13:30',desc:'הפסקה קבועה',cat:'admin'},
+      {id:'s3_2',title:'לימוד: קלוד — פרומפטים',desc:'14:30 — listings ותגיות',cat:'learn'},
+      {id:'s3_L',title:'📝 סיכום שיעור בקלוד',desc:'העתק לקלוד: "סכם מה למדתי היום על [נושא] ותן לי 3 נקודות לשימוש בחנויות חדשות"',cat:'learn'},
+      {id:'s3_3',title:'ספק סין — עדכון',desc:'WhatsApp: "Please confirm August availability"',cat:'china'},
+      {id:'s3_4',title:'⚠️ לסגור הכל עד 16:30',desc:'יציאה 17:00',cat:'alert'}
+    ]},
+  4:{type:'gym',banner:{icon:'💪',title:'אימון + סיכום שבוע',sub:'חמישי — Ads וסקירה',cls:'db-gym'},
+    chips:[{c:'ch-gym',t:'8:00 חדר כושר'},{c:'ch-work',t:'10:00 Etsy Ads'},{c:'ch-break',t:'13:30 צהריים'},{c:'ch-learn',t:'14:30 שופיפיי'},{c:'ch-work',t:'15:30 סקירה'},{c:'ch-break',t:'17:30 הפסקה'}],
+    tasks:[
+      {id:'s4_0',title:'💪 חדר כושר — 8:00',desc:'',cat:'gym'},
+      {id:'s4_g1',title:'🎨 הכנת גרפיקות — 2+ תמונות',desc:'תמונות מוצר לחנויות',cat:'etsy'},
+      {id:'s4_g2',title:'📦 העלאת 2+ מוצרים לחנויות',desc:'listings לחנויות הקיימות',cat:'etsy'},
+      {id:'s4_lunch',title:'🍽️ צהריים — 13:30',desc:'הפסקה קבועה',cat:'admin'},
+      {id:'s4_2',title:'לימוד: קורס Shopify',desc:'14:30',cat:'learn'},
+      {id:'s4_L',title:'📝 סיכום שיעור בקלוד',desc:'העתק לקלוד: "סכם מה למדתי היום על [נושא] ותן לי 3 נקודות לשימוש בחנויות חדשות"',cat:'learn'},
+      {id:'s4_3',title:'סקירת שבוע',desc:'מה הושג? כמה listings? כמה מוצרים הועלו? עדכון Notion',cat:'plan'},
+      {id:'s4_4',title:'תכנון ראשון הבא',desc:'3 Must-Do לראשון',cat:'plan'},
+      {id:'s4_end',title:'🌙 סיכום יום + תכנון מחר',desc:'מה הושלם? מה נשאר?',cat:'plan'}
+    ]},
+  5:{type:'short',banner:{icon:'☕',title:'שישי — עד 13:00',sub:'אדמין קל, אין פרויקטים חדשים',cls:'db-short'},
+    chips:[{c:'ch-break',t:'9:30 התחלה'},{c:'ch-work',t:'9:30–13:00 אדמין'},{c:'ch-warn',t:'⛔ סיום 13:00'}],
+    tasks:[
+      {id:'s5_g1',title:'🎨 הכנת גרפיקות — 2+ תמונות',desc:'תמונות מוצר לסוף השבוע',cat:'etsy'},
+      {id:'s5_g2',title:'📦 העלאת 2+ מוצרים לחנויות',desc:'listings לחנויות הקיימות',cat:'etsy'},
+      {id:'s5_1',title:'תגובות לקוחות + reviews',desc:'Etsy messages + reviews',cat:'admin'},
+      {id:'s5_2',title:'Analytics שבועי',desc:'visits, orders, conversion rate',cat:'etsy'},
+      {id:'s5_3',title:'Analytics שבועי מלא',desc:'visits, orders, conversion rate לכל חנות',cat:'etsy'}
+    ]},
+  6:{type:'rest',banner:{icon:'🌿',title:'שבת — מנוחה',sub:'מטענים לשבוע הבא',cls:'db-rest'},chips:[],
+    tasks:[{id:'s6_1',title:'שבת שלום 🌿',desc:'לא בודקים Etsy היום',cat:'admin'}]}
+};
+
+// ═══════ FIREBASE / STORAGE ═══════
+let fbUrl=null, fbEnabled=false, syncTimer=null, _pendingWrite=false;
+const LS_FB='fbUrl_v1', LS_MODE='storageMode';
+const DEFAULT_FB_URL='https://daniel-and-shahar-default-rtdb.firebaseio.com';
+
+function initStorage(){
+  const saved=localStorage.getItem(LS_FB);
+  const mode=localStorage.getItem(LS_MODE);
+  if(mode==='local'){ startLocal(); return; }
+  if(saved){ fbUrl=saved; startFirebase(); return; }
+  // Use default URL automatically
+  fbUrl=DEFAULT_FB_URL;
+  localStorage.setItem(LS_FB, DEFAULT_FB_URL);
+  startFirebase();
+}
+
+function useLocal(){
+  localStorage.setItem(LS_MODE,'local');
+  document.getElementById('setupOverlay').style.display='none';
+  startLocal();
+}
+
+function connectFirebase(){
+  let url=document.getElementById('fbUrlInput').value.trim();
+  if(!url){ alert('הכנס את ה-Firebase URL'); return; }
+  if(!url.startsWith('http')) url='https://'+url;
+  if(url.endsWith('/')) url=url.slice(0,-1);
+  fbUrl=url;
+  localStorage.setItem(LS_FB,url);
+  localStorage.removeItem(LS_MODE);
+  document.getElementById('setupOverlay').style.display='none';
+  startFirebase();
+  toast('✓ מחובר ל-Firebase!');
+}
+
+function startLocal(){
+  fbEnabled=false;
+  document.getElementById('syncBadge').style.display='none';
+  goToday();
+}
+
+function startFirebase(){
+  fbEnabled=true;
+  document.getElementById('syncBadge').style.display='flex';
+  setSyncStatus('sync','מתחבר...');
+  testConnection();
+  goToday();
+  // poll every 10 seconds for changes
+  setInterval(syncFromFb, 60000);
+}
+
+async function testConnection(){
+  try{
+    const r=await fetch(fbUrl+'/.json?shallow=true',{method:'GET'});
+    if(r.ok) setSyncStatus('ok','מחובר');
+    else setSyncStatus('off','שגיאה');
+  }catch{ setSyncStatus('off','אין חיבור'); }
+}
+
+function setSyncStatus(state,label){
+  const dot=document.getElementById('syncDot');
+  dot.className='sync-dot '+state;
+  document.getElementById('syncLabel').textContent=label;
+}
+
+async function fbGet(path){
+  if(!fbEnabled) return null;
+  try{
+    const r=await fetch(fbUrl+path+'.json');
+    if(r.ok) return await r.json();
+  }catch{}
+  return null;
+}
+
+async function fbSet(path,data){
+  if(!fbEnabled) return;
+  setSyncStatus('sync','שומר...');
+  _pendingWrite=true;
+  try{
+    await fetch(fbUrl+path+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
+    setSyncStatus('ok','מסונכרן');
+  }catch{ setSyncStatus('off','שגיאת שמירה'); }
+  finally{ _pendingWrite=false; }
+}
+
+async function syncFromFb(){
+  if(!fbEnabled || _pendingWrite) return;
+  const key=dk(cur);
+  const remote=await fbGet('/days/'+key);
+  if(!remote) return;
+  const local=getLocal(cur);
+  const merged={
+    tasks:{...local.tasks,...remote.tasks},
+    custom:mergeCustom(local.custom||[],remote.custom||[]),
+    hidden:[...new Set([...(local.hidden||[]),...(remote.hidden||[])])]
+  };
+  setLocal(cur,merged);
+  if(document.activeElement?.tagName==='TEXTAREA') return;
+  renderDay();
+  setSyncStatus('ok','מסונכרן');
+}
+
+// ═══════ LOCAL STORAGE FALLBACK ═══════
+const dk=d=>d.toISOString().split('T')[0];
+const getLocal=d=>{try{const v=localStorage.getItem('d_'+dk(d));return v?JSON.parse(v):{tasks:{},custom:[]};}catch{return{tasks:{},custom:[]};}};
+const setLocal=(d,v)=>{try{localStorage.setItem('d_'+dk(d),JSON.stringify(v));}catch{}};
+
+function mergeCustom(local,remote){
+  const ids=new Set(remote.map(t=>t.id));
+  return [...remote,...local.filter(t=>!ids.has(t.id))];
+}
+
+async function gdd(d){
+  if(fbEnabled && !_pendingWrite){
+    const remote=await fbGet('/days/'+dk(d));
+    if(remote){
+      const local=getLocal(d);
+      const merged={
+        tasks:{...remote.tasks,...local.tasks},
+        custom:mergeCustom(local.custom||[],remote.custom||[]),
+        hidden:[...new Set([...(local.hidden||[]),...(remote.hidden||[])])]
+      };
+      setLocal(d,merged);
+      return merged;
+    }
+  }
+  return getLocal(d);
+}
+
+function sdd(d,v){
+  setLocal(d,v);
+  if(fbEnabled) fbSet('/days/'+dk(d),v);
+}
+
+// ═══════ STATE ═══════
+let cur=new Date(); cur.setHours(0,0,0,0);
+let calM=new Date(cur.getFullYear(),cur.getMonth(),1);
+let view='day';
+
+// ═══════ RENDER ═══════
+function render(){
+  renderHeader();
+  if(view==='day') renderDay();
+  else renderWeek();
+  renderCal();
+  renderKPIs();
+}
+
+function renderHeader(){
+  const dow=cur.getDay();
+  document.getElementById('hDate').textContent=`יום ${DAYS[dow]}, ${cur.getDate()}.${cur.getMonth()+1}.${cur.getFullYear()}`;
+  const t=new Date();t.setHours(0,0,0,0);
+  const d=Math.round((cur-t)/86400000);
+  document.getElementById('hRel').textContent=d===0?'היום':d===-1?'אתמול':d===1?'מחר':d<0?`לפני ${-d} ימים`:`בעוד ${d} ימים`;
+}
+
+async function renderDay(){
+  const dow=cur.getDay(),def=W[dow];
+  const dd=await gdd(cur);
+  if(!dd.custom) dd.custom=[];
+  if(!dd.hidden) dd.hidden=[];
+
+  document.getElementById('banner').innerHTML=`<div class="day-banner ${def.banner.cls}"><div class="db-icon">${def.banner.icon}</div><div><div class="db-title">${def.banner.title}</div><div class="db-sub">${def.banner.sub}</div></div></div>`;
+  document.getElementById('chips').innerHTML=def.chips.length?`<div class="chips">${def.chips.map(c=>`<div class="chip ${c.c}">${c.t}</div>`).join('')}</div>`:'';
+
+  // Time-limited tasks (show only within date range)
+const LIMITED=[
+  {id:'lim_proxy',title:'🔥 חימום פרוקסי — AdsPower',desc:'היכנס עם כל משתמש חדש: גלוש 10 דק\' באמאזון/גוגל/פייסבוק, בדוק שהחשבון לא חסום. מטרה: להפוך ממשתמש קונה → מוכר בטוח',cat:'etsy',from:'2026-06-14',to:'2026-06-28'}
+];
+const today_str=dk(new Date());
+const limitedToday=LIMITED.filter(t=>t.from<=today_str && t.to>=today_str && cur.getDay()!==6);
+const all=[...def.tasks,...limitedToday,...dd.custom.map((t,i)=>({...t,_c:true,_ci:i}))]
+  .filter(t=>!dd.hidden.includes(t.id))
+  .map(t=>dd.overrides?.[t.id]?{...t,...dd.overrides[t.id]}:t);
+  all.forEach(t=>{_taskMap[t.id]=t;});
+  const done=all.filter(t=>dd.tasks[t.id]?.done).length;
+  document.getElementById('pCount').textContent=`${done}/${all.length}`;
+  document.getElementById('pFill').style.width=all.length?`${Math.round(done/all.length*100)}%`:'0%';
+
+  document.getElementById('tasks').innerHTML=all.map(t=>{
+    const st=dd.tasks[t.id]||{};
+    return`<div class="tc ${st.done?'done':''} ${st.open?'open':''}" id="tc_${t.id}">
+      <div class="tc-row" onclick="toggleOpen('${t.id}')">
+        <div class="chk" onclick="event.stopPropagation();toggle('${t.id}')">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 5-5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="tc-body">
+          <div class="tc-title">${t.title}</div>
+          ${t.desc?`<div class="tc-desc">${t.desc}</div>`:''}
+        </div>
+        <div class="tc-right">
+          <span class="badge b-${t.cat}">${CLABELS[t.cat]||t.cat}</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <button class="move-btn" onclick="openMoveMenu('${t.id}',${t._ci??-1},this)" title="העבר משימה">→</button>
+            <button class="edit-btn" onclick="event.stopPropagation();toggleEdit('${t.id}')" title="ערוך משימה">✎</button>
+            <button class="del-btn" onclick="event.stopPropagation();${t._c?`delTask(${t._ci})`:`hideTask('${t.id}')`}">✕</button>
+            <div class="expand-arr">▾</div>
+          </div>
+        </div>
+      </div>
+      <div class="tc-notes"><textarea class="notes-ta" placeholder="הוסף הערה..." oninput="debounceSave('${t.id}',this.value)">${st.notes||''}</textarea></div>
+      <div class="tc-edit">
+        <input class="ai" id="et_${t.id}" value="${(t.title||'').replace(/"/g,'&quot;')}" placeholder="כותרת..." onclick="event.stopPropagation()" />
+        <input class="ai" id="ed_${t.id}" value="${(t.desc||'').replace(/"/g,'&quot;')}" placeholder="פרטים (אופציונלי)..." onclick="event.stopPropagation()" />
+        <div class="form-row">
+          <button class="edit-save" onclick="event.stopPropagation();saveEdit('${t.id}',${t._c?t._ci:-1})">שמור</button>
+          <button class="edit-cancel" onclick="event.stopPropagation();toggleEdit('${t.id}')">ביטול</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOpen(id){
+  const dd=getLocal(cur);
+  if(!dd.tasks[id])dd.tasks[id]={};
+  dd.tasks[id].open=!dd.tasks[id].open;
+  sdd(cur,dd);
+  document.getElementById('tc_'+id)?.classList.toggle('open');
+}
+
+async function toggle(id){
+  const dd=getLocal(cur);
+  if(!dd.tasks[id])dd.tasks[id]={};
+  dd.tasks[id].done=!dd.tasks[id].done;
+  sdd(cur,dd);
+  const el=document.getElementById('tc_'+id);
+  if(el)el.classList.toggle('done',dd.tasks[id].done);
+  const def=W[cur.getDay()];
+  const all=[...def.tasks,...(dd.custom||[])];
+  const done=all.filter(t=>dd.tasks[t.id]?.done).length;
+  document.getElementById('pCount').textContent=`${done}/${all.length}`;
+  document.getElementById('pFill').style.width=all.length?`${Math.round(done/all.length*100)}%`:'0%';
+  renderKPIs();renderCal();
+  if(dd.tasks[id].done)toast('✓ הושלם');
+}
+
+const _noteTimers={};
+function debounceSave(id,v){
+  clearTimeout(_noteTimers[id]);
+  _noteTimers[id]=setTimeout(()=>saveNote(id,v),600);
+}
+function saveNote(id,v){
+  const dd=getLocal(cur);
+  if(!dd.tasks[id])dd.tasks[id]={};
+  dd.tasks[id].notes=v;
+  sdd(cur,dd);
+}
+
+function showForm(){document.getElementById('addForm').classList.add('open');document.getElementById('aTitle').focus();}
+function hideForm(){document.getElementById('addForm').classList.remove('open');document.getElementById('aTitle').value='';document.getElementById('aDesc').value='';}
+async function addTask(){
+  const title=document.getElementById('aTitle').value.trim();if(!title)return;
+  const dd=getLocal(cur);if(!dd.custom)dd.custom=[];
+  dd.custom.push({id:'c'+Date.now(),title,desc:document.getElementById('aDesc').value.trim(),cat:document.getElementById('aCat').value});
+  sdd(cur,dd);hideForm();renderDay();
+}
+function toggleEdit(id){
+  const el=document.getElementById('tc_'+id);
+  if(!el)return;
+  const isEditing=el.classList.toggle('editing');
+  if(isEditing){
+    el.classList.remove('open');
+    setTimeout(()=>document.getElementById('et_'+id)?.focus(),50);
+  }
+}
+function saveEdit(id,customIdx){
+  const title=document.getElementById('et_'+id)?.value.trim();
+  if(!title)return;
+  const desc=document.getElementById('ed_'+id)?.value.trim()||'';
+  const dd=getLocal(cur);
+  if(customIdx>=0){
+    if(dd.custom[customIdx]){dd.custom[customIdx].title=title;dd.custom[customIdx].desc=desc;}
+  } else {
+    if(!dd.overrides)dd.overrides={};
+    dd.overrides[id]={title,desc};
+  }
+  sdd(cur,dd);renderDay();
+}
+function delTask(i){const dd=getLocal(cur);dd.custom.splice(i,1);sdd(cur,dd);renderDay();}
+function hideTask(id){const dd=getLocal(cur);if(!dd.hidden)dd.hidden=[];dd.hidden.push(id);sdd(cur,dd);renderDay();}
+
+function renderWeek(){
+  const sun=new Date(cur);sun.setDate(cur.getDate()-cur.getDay());
+  const today=new Date();today.setHours(0,0,0,0);
+  let h='';
+  for(let i=0;i<6;i++){
+    const day=new Date(sun);day.setDate(sun.getDate()+i);
+    const def=W[day.getDay()],dd=getLocal(day);
+    const all=[...def.tasks,...(dd.custom||[])];
+    const done=all.filter(t=>dd.tasks?.[t.id]?.done).length;
+    const pct=all.length?Math.round(done/all.length*100):0;
+    const isT=day.getTime()===today.getTime();
+    h+=`<div class="wdc ${isT?'today-wdc':''}" onclick="jumpDay(${day.getFullYear()},${day.getMonth()},${day.getDate()})">
+      <div class="wdc-name">${DAYS[day.getDay()]}</div><div class="wdc-date">${day.getDate()}.${day.getMonth()+1}</div>
+      ${def.tasks.slice(0,3).map(t=>`<div class="wdc-task"><div class="wdc-chk ${dd.tasks?.[t.id]?.done?'d':''}"></div><div class="wdc-tlabel">${t.title}</div></div>`).join('')}
+      ${all.length>3?`<div class="wdc-more">+${all.length-3} עוד</div>`:''}
+      <div class="wdc-bar"><div class="wdc-bfill" style="width:${pct}%"></div></div>
+      <div class="wdc-pct">${done}/${all.length}</div>
+    </div>`;
+  }
+  document.getElementById('wGrid').innerHTML=h;
+}
+
+function jumpDay(y,m,d){cur=new Date(y,m,d);setView('day');render();}
+
+function renderCal(){
+  const m=calM.getMonth(),y=calM.getFullYear();
+  document.getElementById('cMonth').textContent=`${MONTHS[m]} ${y}`;
+  const lbls=['א','ב','ג','ד','ה','ו','ש'];
+  let h=lbls.map(l=>`<div class="cal-lbl">${l}</div>`).join('');
+  const first=new Date(y,m,1),sdow=first.getDay(),dim=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let i=sdow-1;i>=0;i--)h+=`<div class="cal-d c-other">${prev-i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const date=new Date(y,m,d),dow=date.getDay();
+    const isT=date.getTime()===today.getTime(),isV=date.getTime()===cur.getTime();
+    const dd=getLocal(date);
+    const hasDone=dd.tasks&&Object.values(dd.tasks).some(t=>t.done);
+    let cls=isT?'c-today':isV?'c-view':'';
+    if(dow===6)cls+=' c-shab';if(hasDone)cls+=' c-done';
+    h+=`<div class="cal-d ${cls}" onclick="jumpDay(${y},${m},${d})">${d}</div>`;
+  }
+  const rem=(sdow+dim)%7===0?0:7-(sdow+dim)%7;
+  for(let i=1;i<=rem;i++)h+=`<div class="cal-d c-other">${i}</div>`;
+  document.getElementById('cal').innerHTML=h;
+}
+function cPrev(){calM.setMonth(calM.getMonth()-1);renderCal();}
+function cNext(){calM.setMonth(calM.getMonth()+1);renderCal();}
+
+function renderKPIs(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const tdd=getLocal(today),tdef=W[today.getDay()];
+  const todayDone=tdef.tasks.filter(t=>tdd.tasks?.[t.id]?.done).length;
+  const sun=new Date(today);sun.setDate(today.getDate()-today.getDay());
+  let weekDone=0,gymDone=0;
+  for(let i=0;i<6;i++){const d=new Date(sun);d.setDate(sun.getDate()+i);const dd=getLocal(d),def=W[d.getDay()];def.tasks.forEach(t=>{if(dd.tasks?.[t.id]?.done){weekDone++;if(t.cat==='gym')gymDone++;}});}
+  let streak=0,chk=new Date(today);
+  for(let i=0;i<365;i++){const dd=getLocal(chk),def=W[chk.getDay()];if(def.tasks.length===0){chk.setDate(chk.getDate()-1);continue;}if(def.tasks.filter(t=>dd.tasks?.[t.id]?.done).length>0){streak++;chk.setDate(chk.getDate()-1);}else break;}
+  document.getElementById('kToday').textContent=todayDone;
+  document.getElementById('kStreak').textContent=streak;
+  document.getElementById('kWeek').textContent=weekDone;
+  document.getElementById('kGym').textContent=gymDone;
+}
+
+function shiftDay(n){cur.setDate(cur.getDate()+n);calM=new Date(cur.getFullYear(),cur.getMonth(),1);render();}
+function goToday(){cur=new Date();cur.setHours(0,0,0,0);calM=new Date(cur.getFullYear(),cur.getMonth(),1);render();}
+function setView(v,btn){
+  view=v;
+  document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');else document.querySelectorAll('.vtab')[v==='day'?0:1].classList.add('active');
+  document.getElementById('dv').classList.toggle('active',v==='day');
+  document.getElementById('wv').classList.toggle('active',v==='week');
+  render();
+}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),1800);}
+
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+  if(e.key==='ArrowRight')shiftDay(-1);if(e.key==='ArrowLeft')shiftDay(1);
+  if(e.key.toLowerCase()==='t')goToday();
+});
+
+initStorage();
+</script>
+</body>
+</html>
