@@ -753,10 +753,10 @@ function rowHTML(task, dd){
     </div>
     <div class="trow-detail ${isOpen?'open':''}" id="det_${task.id}" onclick="event.stopPropagation()">
       <div class="edit-row">
-        <input class="edit-inp" id="et_${task.id}" value="${(task.title||'').replace(/"/g,'&quot;')}" style="flex:2" />
-        <input class="edit-inp" id="ed_${task.id}" value="${(task.desc||'').replace(/"/g,'&quot;')}" placeholder="${t.descPh}" style="flex:3" />
+        <input class="edit-inp" id="et_${task.id}" value="${esc(task.title||'')}" style="flex:2" />
+        <input class="edit-inp" id="ed_${task.id}" value="${esc(task.desc||'')}" placeholder="${t.descPh}" style="flex:3" />
       </div>
-      <textarea class="notes-ta" placeholder="${t.notePh}" oninput="debounceSave('${task.id}',this.value)">${st.notes||''}</textarea>
+      <textarea class="notes-ta" placeholder="${t.notePh}" oninput="debounceSave('${task.id}',this.value)">${esc(st.notes||'')}</textarea>
       <div class="det-btns">
         <button class="btn-save" onclick="saveEdit('${task.id}',${ciAttr})">${t.save}</button>
         <button class="btn-cxl" onclick="closeOpen()">${t.cancel}</button>
@@ -770,7 +770,7 @@ function assigneePill(assignee, taskId, ci){
   if(!w && assignee==='all'){
     return `<div class="assignee-pill ap-all" onclick="openAssigneeMenu('${taskId}',${ci},this)"><div class="ap-dot dot-all"></div>${t.all}</div>`;
   }
-  if(!w) return `<div class="assignee-pill ap-all">${assignee}</div>`;
+  if(!w) return `<div class="assignee-pill ap-all">${esc(assignee)}</div>`;
   return `<div class="assignee-pill ap-${assignee}" onclick="openAssigneeMenu('${taskId}',${ci},this)"><div class="ap-dot" style="background:${w.color}"></div>${w.name}</div>`;
 }
 
