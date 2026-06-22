@@ -125,6 +125,7 @@ body.he .t-strip{margin:0 -14px 0 -6px}
 /* actions */
 .t-actions{display:flex;gap:2px;justify-content:flex-end;opacity:0;transition:opacity .15s}
 .trow:hover .t-actions{opacity:1}
+@media (hover:none),(max-width:600px){.t-actions{opacity:1}}
 .icon-btn{width:22px;height:22px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:12px;display:flex;align-items:center;justify-content:center;transition:color .12s}
 .icon-btn:hover{color:var(--blue)}
 .icon-btn.del:hover{color:var(--red)}
@@ -595,6 +596,7 @@ let calM = new Date(cur.getFullYear(), cur.getMonth(), 1);
 let _moveCtx = null, _assigneeCtx = null;
 let _openId = null;
 let _renderGen = 0;
+let _curTasks = [];
 
 // ═══ LOGIN ═══
 function selectUser(key){
@@ -620,75 +622,54 @@ function renderHeader(){
   document.getElementById('hRel').textContent = diff===0?t.today:diff===-1?t.yesterday:diff===1?t.tomorrow:diff<0?`${-diff} ${t.ago}`:`${diff} ${t.ahead}`;
 }
 
-async function renderMain(){
-  const gen = ++_renderGen;
-  const dd = await loadDay(cur);
-  if(gen !== _renderGen) return;
-  if(!dd.tasks) dd.tasks = {};
-  if(!dd.custom) dd.custom = [];
-  const t = tx(), lbl = DAILY_LABELS[lang];
+function _buildBoard(dd){
+  if(!dd.tasks) dd.tasks={};
+  if(!dd.custom) dd.custom=[];
+  const t=tx(), lbl=DAILY_LABELS[lang];
 
-  const dailyTasks = DAILY_TMPL
-    .filter(tmpl => !(dd.hidden||[]).includes(tmpl.id))
-    .map(tmpl => {
-      const st = dd.tasks[tmpl.id]||{};
-      const over = dd.overrides?.[tmpl.id]||{};
-      const assignee = tmpl.assignee==='rotate' ? getDailyAssignee(cur, tmpl.phase||0) : tmpl.assignee;
-      return {...tmpl, ...lbl[tmpl.id], ...over, assignee: st.assignee || assignee};
+  const dailyTasks=DAILY_TMPL
+    .filter(tmpl=>!(dd.hidden||[]).includes(tmpl.id))
+    .map(tmpl=>{
+      const st=dd.tasks[tmpl.id]||{};
+      const over=dd.overrides?.[tmpl.id]||{};
+      const assignee=tmpl.assignee==='rotate'?getDailyAssignee(cur,tmpl.phase||0):tmpl.assignee;
+      return {...tmpl,...lbl[tmpl.id],...over,assignee:st.assignee||assignee};
     })
-    .filter(tmpl => visibleToUser(tmpl.assignee));
+    .filter(tmpl=>visibleToUser(tmpl.assignee));
 
-  const customTasks = (dd.custom||[])
-    .filter(t => !(dd.hidden||[]).includes(t.id))
-    .map((t,i) => {
-      const st = dd.tasks[t.id]||{};
-      return {...t, _c:true, _ci:i, assignee: st.assignee || t.assignee || 'all'};
+  const customTasks=(dd.custom||[])
+    .filter(ct=>!(dd.hidden||[]).includes(ct.id))
+    .map((ct,i)=>{
+      const st=dd.tasks[ct.id]||{};
+      return {...ct,_c:true,_ci:i,assignee:st.assignee||ct.assignee||'all'};
     })
-    .filter(t => visibleToUser(t.assignee));
+    .filter(ct=>visibleToUser(ct.assignee));
 
-  const allTasks = [...dailyTasks, ...customTasks];
-  const counts = {pending:0, inprogress:0, done:0, stuck:0};
-  allTasks.forEach(t => { const s=(dd.tasks[t.id]?.status)||'pending'; counts[s]=(counts[s]||0)+1; });
-  const total = allTasks.length, doneN = counts.done;
-  document.getElementById('progCount').textContent = `${doneN}/${total}`;
-  document.getElementById('progFill').style.width = total?`${Math.round(doneN/total*100)}%`:'0%';
+  _curTasks=[...dailyTasks,...customTasks];
+  _updateProgress(dd);
 
-  let html = '';
-
-  // Daily section
+  let html='';
   if(dailyTasks.length){
-    html += `<div class="tbl-card">
+    html+=`<div class="tbl-card">
       <div class="tbl-section">${t.secDaily}</div>
       <div class="tbl-head">
-        <div></div>
-        <div class="th">${t.thTask}</div>
-        <div class="th">${t.thAssignee}</div>
-        <div class="th">${t.thStatus}</div>
-        <div class="th">${t.thCat}</div>
-        <div class="th"></div>
+        <div></div><div class="th">${t.thTask}</div><div class="th">${t.thAssignee}</div>
+        <div class="th">${t.thStatus}</div><div class="th">${t.thCat}</div><div class="th"></div>
       </div>`;
-    dailyTasks.forEach(task => { html += rowHTML(task, dd); });
-    html += `</div>`;
+    dailyTasks.forEach(task=>{html+=rowHTML(task,dd);});
+    html+=`</div>`;
   }
-
-  // Custom section
   if(customTasks.length){
-    html += `<div class="tbl-card">
+    html+=`<div class="tbl-card">
       <div class="tbl-section">${t.secCustom}</div>
       <div class="tbl-head">
-        <div></div>
-        <div class="th">${t.thTask}</div>
-        <div class="th">${t.thAssignee}</div>
-        <div class="th">${t.thStatus}</div>
-        <div class="th">${t.thCat}</div>
-        <div class="th"></div>
+        <div></div><div class="th">${t.thTask}</div><div class="th">${t.thAssignee}</div>
+        <div class="th">${t.thStatus}</div><div class="th">${t.thCat}</div><div class="th"></div>
       </div>`;
-    customTasks.forEach(task => { html += rowHTML(task, dd); });
-    html += `</div>`;
+    customTasks.forEach(task=>{html+=rowHTML(task,dd);});
+    html+=`</div>`;
   }
-
-  // Add task
-  html += `
+  html+=`
     <div class="tbl-card">
       <div class="add-row" onclick="showForm()">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -715,9 +696,43 @@ async function renderMain(){
         </div>
       </div>
     </div>`;
+  document.getElementById('boardWrap').innerHTML=html;
+  renderTeamSummary(dd,_curTasks);
+}
 
-  document.getElementById('boardWrap').innerHTML = html;
-  renderTeamSummary(dd, [...dailyTasks,...customTasks]);
+function _updateProgress(dd){
+  const counts={pending:0,inprogress:0,done:0,stuck:0};
+  _curTasks.forEach(task=>{const s=(dd.tasks[task.id]?.status)||'pending';counts[s]=(counts[s]||0)+1;});
+  const total=_curTasks.length,doneN=counts.done;
+  document.getElementById('progCount').textContent=`${doneN}/${total}`;
+  document.getElementById('progFill').style.width=total?`${Math.round(doneN/total*100)}%`:'0%';
+}
+
+function _updateStatusDOM(id,status){
+  const t=tx(),row=document.getElementById('row_'+id);
+  if(!row) return;
+  row.className='trow'+(status==='done'?' done':'')+(status==='stuck'?' stuck':'');
+  const strip=row.querySelector('.t-strip');
+  if(strip) strip.className='t-strip '+STRIP[status];
+  const btn=row.querySelector('.status-btn');
+  if(btn){btn.className='status-btn '+S_CLS[status];btn.textContent=S_ICON[status]+' '+t[status]+' ▾';}
+}
+
+async function renderMain(){
+  const gen=++_renderGen;
+  // Step 1: render immediately from localStorage — zero flicker
+  _buildBoard(getLocal(cur));
+  // Step 2: fetch from Firebase in background, update if newer
+  if(!_pendingWrite){
+    const remoteDd=await fbGet(getBoardPath()+'/'+dk(cur));
+    if(gen!==_renderGen) return; // a newer render started, abort
+    if(remoteDd){
+      if(!remoteDd.tasks)remoteDd.tasks={};
+      if(!remoteDd.custom)remoteDd.custom=[];
+      setLocal(cur,remoteDd);
+      _buildBoard(remoteDd);
+    }
+  }
 }
 
 function rowHTML(task, dd){
@@ -732,7 +747,7 @@ function rowHTML(task, dd){
   const notesPreview = st.notes ? `<div class="tc-notes-preview">📝 ${esc(st.notes.substring(0,40))}${st.notes.length>40?'…':''}</div>` : '';
 
   return `
-    <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''}" onclick="toggleOpen('${task.id}')">
+    <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''}" id="row_${task.id}" onclick="toggleOpen('${task.id}')">
       <div class="t-strip ${STRIP[status]}"></div>
       <div class="t-info">
         <div class="tc-title">${esc(task.title)}</div>
@@ -858,14 +873,19 @@ function openStatusMenu(id, btn){
   menu.style.right='auto';
 }
 function closeStatusMenu(){ document.getElementById('statusMenu').style.display='none'; }
-async function setStatus(id, status){
+function setStatus(id, status){
   closeStatusMenu();
+  // Optimistic: update localStorage + DOM immediately, no waiting
   const dd=getLocal(cur);
   if(!dd.tasks[id]) dd.tasks[id]={};
   dd.tasks[id].status=status;
-  saveDay(cur,dd);
+  setLocal(cur,dd);
+  _updateStatusDOM(id,status);
+  _updateProgress(dd);
+  renderTeamSummary(dd,_curTasks);
+  // Save to Firebase in background
+  fbSet(getBoardPath()+'/'+dk(cur),dd);
   if(status==='done') toast(tx().tDone);
-  renderMain();
 }
 
 const _noteTimers={};
@@ -969,9 +989,10 @@ async function doMove(ts){
 }
 
 // ═══ NAV ═══
-function shiftDay(n){ cur=new Date(cur); cur.setDate(cur.getDate()+n); cur.setHours(0,0,0,0); calM=new Date(cur.getFullYear(),cur.getMonth(),1); render(); }
-function goToday(){ cur=new Date(); cur.setHours(0,0,0,0); calM=new Date(cur.getFullYear(),cur.getMonth(),1); render(); }
-function jumpDay(y,m,d){ cur=mkD(y,m,d); render(); }
+function updateURL(){ try{ const u=new URL(location.href); u.searchParams.set('d',dk(cur)); history.replaceState(null,'',u); }catch{} }
+function shiftDay(n){ cur=new Date(cur); cur.setDate(cur.getDate()+n); cur.setHours(0,0,0,0); calM=new Date(cur.getFullYear(),cur.getMonth(),1); updateURL(); render(); }
+function goToday(){ cur=new Date(); cur.setHours(0,0,0,0); calM=new Date(cur.getFullYear(),cur.getMonth(),1); updateURL(); render(); }
+function jumpDay(y,m,d){ cur=mkD(y,m,d); updateURL(); render(); }
 
 // ═══ LANG ═══
 function applyLang(){
@@ -1002,13 +1023,21 @@ setInterval(async()=>{
   setLocal(cur,r);
   if(['TEXTAREA','INPUT','SELECT'].includes(document.activeElement?.tagName)) return;
   if(document.getElementById('addForm')?.classList.contains('open')) return;
-  renderMain(); renderCal(); setSyncStatus('ok','synced');
+  _renderGen++; // invalidate any in-flight renderMain
+  _buildBoard(r); renderCal(); setSyncStatus('ok','synced');
 },20000);
 
 // ═══ INIT ═══
 async function init(){
   setSyncStatus('sync','connecting');
   applyLang();
+  // Read date from URL (?d=2026-06-22)
+  const _urlD=new URLSearchParams(location.search).get('d');
+  if(_urlD&&/^\d{4}-\d{2}-\d{2}$/.test(_urlD)){
+    const [uy,um,ud]=_urlD.split('-').map(Number);
+    const dt=new Date(uy,um-1,ud); dt.setHours(0,0,0,0);
+    if(!isNaN(dt.getTime())){ cur=dt; calM=new Date(cur.getFullYear(),cur.getMonth(),1); }
+  }
   document.getElementById('tab-shared').classList.toggle('active', currentBoard==='shared');
   document.getElementById('tab-shachar').classList.toggle('active', currentBoard==='shachar');
   document.body.setAttribute('data-board', currentBoard);
