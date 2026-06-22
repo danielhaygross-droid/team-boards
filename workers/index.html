@@ -626,8 +626,9 @@ const mkD = (y,m,d) => { const dt=new Date(y,m,d); dt.setHours(0,0,0,0); return 
 function setSyncStatus(state, key){ document.getElementById('syncDot').className='sync-dot '+state; document.getElementById('syncLbl').textContent=tx()[key]||key; }
 async function fbGet(p){ try{ const r=await fetch(FB_URL+p+'.json'); if(r.ok) return await r.json(); }catch{} return null; }
 async function fbSet(p,data){ setSyncStatus('sync','saving'); _pendingWrite=true; try{ await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}}); setSyncStatus('ok','synced'); }catch{ setSyncStatus('off','offline'); } finally{ _pendingWrite=false; } }
-const getLocal = d => { try{ const v=localStorage.getItem('wb_'+dk(d)); return v?JSON.parse(v):{tasks:{},custom:[]}; }catch{ return{tasks:{},custom:[]}; } };
-const setLocal = (d,v) => { try{ localStorage.setItem('wb_'+dk(d),JSON.stringify(v)); }catch{} };
+const localKey = d => 'wb_'+currentBoard+'_'+dk(d);
+const getLocal = d => { try{ const v=localStorage.getItem(localKey(d)); return v?JSON.parse(v):{tasks:{},custom:[]}; }catch{ return{tasks:{},custom:[]}; } };
+const setLocal = (d,v) => { try{ localStorage.setItem(localKey(d),JSON.stringify(v)); }catch{} };
 function mergeDay(local,remote){ const mc=(l,r)=>{const ids=new Set(r.map(t=>t.id));return[...r,...l.filter(t=>!ids.has(t.id))]}; return{tasks:{...remote.tasks,...local.tasks},custom:mc(local.custom||[],remote.custom||[]),hidden:[...new Set([...(local.hidden||[]),...(remote.hidden||[])])]}; }
 async function loadDay(d){ if(!_pendingWrite){ const r=await fbGet(getBoardPath()+'/'+dk(d)); if(r){ const m=mergeDay(getLocal(d),r); setLocal(d,m); return m; } } return getLocal(d); }
 function saveDay(d,data){ setLocal(d,data); fbSet(getBoardPath()+'/'+dk(d),data); }
