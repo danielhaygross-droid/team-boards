@@ -21,7 +21,11 @@
   --shadow-md:0 4px 16px rgba(0,0,0,.1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .3s}
+body[data-board="shachar"]{background:#EDE8F5}
+body[data-board="shachar"] .hdr{background:#F3EFFC;border-bottom-color:rgba(109,40,217,.15)}
+body[data-board="shachar"] .board-tabs{background:rgba(109,40,217,.12)}
+body[data-board="shachar"] .board-tab.active{background:#7C3AED;color:#fff}
 body.he{direction:rtl} body.en{direction:ltr}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--s3);border-radius:10px}
 
@@ -559,6 +563,7 @@ function switchBoard(b){
   localStorage.setItem('wb_board', b);
   document.getElementById('tab-shared').classList.toggle('active', b==='shared');
   document.getElementById('tab-shachar').classList.toggle('active', b==='shachar');
+  document.body.setAttribute('data-board', b);
   shops = [];
   loadShops().then(() => render());
 }
@@ -999,6 +1004,7 @@ async function init(){
   applyLang();
   document.getElementById('tab-shared').classList.toggle('active', currentBoard==='shared');
   document.getElementById('tab-shachar').classList.toggle('active', currentBoard==='shachar');
+  document.body.setAttribute('data-board', currentBoard);
   const saved=localStorage.getItem('wb_user');
   if(saved && WORKERS[saved]){ selectUser(saved); }
   const r=await fbGet(getBoardPath()+'/.json?shallow=true');
