@@ -726,33 +726,33 @@ tbody td { padding: 14px 18px; font-size: 14px; color: var(--text-primary); vert
 <script>
 // ── Seed data (imported from Google Sheets) ──────
 const SEED = [
-  {id:1,  desc:'עיצוב גרפי מנוחה',                      amount:200,  payer:'both',    cat:'🎨 עיצוב',            note:'Z ROYAL עיצוב מותג',  date:'10.5.26'},
-  {id:2,  desc:'ציוד ריברנדינג לזיפו',                  amount:710,  payer:'both',    cat:'🔁 ריברנדינג',         note:'',                    date:'20.5.26'},
-  {id:3,  desc:'חנות באסטי קוסינג קרב',                 amount:55,   payer:'both',    cat:'🏪 חנות',              note:'שמרנו קבלות',         date:'20.5.26'},
-  {id:4,  desc:'תשלום ל-LLC',                           amount:907,  payer:'both',    cat:'💼 חשבון עסקי',        note:'חשבון אמריקאי',       date:'21.5.26'},
-  {id:5,  desc:'חנות 2 מנגה גייר',                      amount:55,   payer:'daniel',  cat:'🏪 חנות',              note:'שמרנו קבלות',         date:'30.5.26'},
-  {id:6,  desc:'פרוקסי — 5 דומיינים',                   amount:40,   payer:'daniel',  cat:'🌐 דומיינים',          note:'שמרנו קבלות',         date:'2.6.26'},
-  {id:7,  desc:'מנוי שנתי ADS POWER',                   amount:382,  payer:'daniel',  cat:'🛠️ כלים דיגיטליים',  note:'שמרנו קבלות',         date:'2.6.26'},
-  {id:8,  desc:'18.9$ — תיק וואן פיס',                  amount:54,   payer:'shachar', cat:'🏪 חנות',              note:'מכירה ראשונה',        date:'2.6.26'},
-  {id:9,  desc:'קורס קלאוד',                            amount:67,   payer:'daniel',  cat:'🛠️ כלים דיגיטליים',  note:'',                    date:'8.6.26'},
-  {id:10, desc:'תשלום LLC ב-2',                         amount:815,  payer:'both',    cat:'💼 חשבון עסקי',        note:'חשבון אמריקאי',       date:'10.6.26'},
-  {id:11, desc:'מכירה של חליק מסמס 2 במאמנה ניר',       amount:80,   payer:'shachar', cat:'🏪 חנות',              note:'',                    date:'10.6.26'},
-  {id:12, desc:'כסף עסקות לילאי',                       amount:117,  payer:'shachar', cat:'🏪 חנות',              note:'',                    date:'15.6.26'},
-  {id:13, desc:'עבודה של שחר לכפר הישראלי',             amount:2040, payer:'daniel',  cat:'📦 אחר',               note:'',                    date:'17.6.26'},
-  {id:14, desc:'VPN',                                   amount:9,    payer:'daniel',  cat:'🛠️ כלים דיגיטליים',  note:'',                    date:'17.6.26'},
-  {id:15, desc:'פרוקסי — דומיין נוסף',                  amount:9,    payer:'daniel',  cat:'🌐 דומיינים',          note:'סה"כ 7 דומיינים',     date:'17.6.26'},
-  {id:16, desc:'Glow Chambur חנות',                     amount:86,   payer:'shachar', cat:'🏪 חנות',              note:'שמרנו קבלות',         date:'22.6.26'},
-  {id:17, desc:'PixelPulseRasin חנות',                  amount:86,   payer:'shachar', cat:'🏪 חנות',              note:'שמרנו קבלות',         date:'22.6.26'},
-  {id:18, desc:'פרוקסי — 5 דומיינים נוספים',            amount:40,   payer:'daniel',  cat:'🌐 דומיינים',          note:'',                    date:'22.6.26'},
+  {id:1,  desc:'עיצוב גרפי מנוחה',                        amount:200,  payer:'both',    cat:'🎨 עיצוב',            note:'Z ROYAL עיצוב מותג',                                     date:'10.5.26'},
+  {id:2,  desc:'ציוד ריברנדינג לזיפו',                    amount:710,  payer:'both',    cat:'🔁 ריברנדינג',         note:'',                                                        date:'20.5.26'},
+  {id:3,  desc:'חנות באסטי קרסינג קרב',                   amount:55,   payer:'both',    cat:'🏪 חנות',              note:'שמרנו קבלות',                                             date:'20.5.26'},
+  {id:4,  desc:'תשלום ל-LLC',                             amount:907,  payer:'both',    cat:'💼 חשבון עסקי',        note:'חשבון אמריקאי',                                          date:'21.5.26'},
+  {id:5,  desc:'חנות 2 מנגה גייר',                        amount:55,   payer:'daniel',  cat:'🏪 חנות',              note:'שמרנו קבלות',                                             date:'30.5.26'},
+  {id:6,  desc:'פרוקסי — 5 דומיינים',                     amount:40,   payer:'daniel',  cat:'🌐 דומיינים',          note:'שמרנו קבלות',                                             date:'2.6.26'},
+  {id:7,  desc:'מנוי שנתי ADS POWER',                     amount:382,  payer:'daniel',  cat:'🛠️ כלים דיגיטליים',  note:'שמרנו קבלות',                                             date:'2.6.26'},
+  {id:8,  desc:'18.9$ — תיק וואן פיס',                    amount:54,   payer:'shachar', cat:'🏪 חנות',              note:'מכירה ראשונה',                                            date:'2.6.26'},
+  {id:9,  desc:'קורס קלאוד',                              amount:67,   payer:'shachar', cat:'🛠️ כלים דיגיטליים',  note:'קורס AI',                                                 date:'8.6.26'},
+  {id:10, desc:'תשלום חלק ב ל LLC',                       amount:815,  payer:'daniel',  cat:'💼 חשבון עסקי',        note:'נשאר עוד תשלום אחד',                                     date:'10.6.26'},
+  {id:11, desc:'מכירה של תיק מספר 2 במאנגה גיר',          amount:80,   payer:'shachar', cat:'🏪 חנות',              note:'מכירה 2 במאנגה גיר',                                     date:'10.6.26'},
+  {id:12, desc:'כסף מעמית לרילאיי',                       amount:117,  payer:'daniel',  cat:'🌐 דומיינים',          note:'קיבלנו בדולר העברנו בשקל',                               date:'15.6.26'},
+  {id:13, desc:'העברה של כסף לרילאי',                     amount:2040, payer:'daniel',  cat:'⚡ חשבונות',           note:'העברת כסף לחשבון רילאי — אם לא נשתמש נחזיר בסוף החודש', date:'17.6.26'},
+  {id:14, desc:'VPN ויאטנמי',                             amount:9,    payer:'daniel',  cat:'🌐 דומיינים',          note:'פרוקסי ויאטנמי',                                         date:'17.6.26'},
+  {id:15, desc:'פרוקסי — 1 דומיין נוסף (סה"כ 7)',         amount:9,    payer:'daniel',  cat:'🌐 דומיינים',          note:'פרוקסי מספר 6, לא כולל ויאטנמי',                        date:'17.6.26'},
+  {id:16, desc:'פתיחת חנות Glow Chamber',                 amount:86,   payer:'both',    cat:'🏪 חנות',              note:'מהכסף של הרילאי שכבר שילמנו — מהכסף המשותף',            date:'22.6.26'},
+  {id:17, desc:'פתיחת חנות PixelPulseResin',              amount:86,   payer:'both',    cat:'🏪 חנות',              note:'מהכסף של הרילאי שכבר שילמנו — מהכסף המשותף',            date:'22.6.26'},
+  {id:18, desc:'פרוקסי — 5 דומיינים',                     amount:40,   payer:'shachar', cat:'🌐 דומיינים',          note:'נמצא באדס פאור של שחר',                                  date:'22.6.26'},
 ];
 
-let expenses = JSON.parse(localStorage.getItem('exp-v3') || 'null');
+let expenses = JSON.parse(localStorage.getItem('exp-v4') || 'null');
 if (!expenses) { expenses = SEED.map(e => ({...e})); save(); }
 
 let filter = 'all';
 let currentPayer = 'daniel';
 
-function save() { localStorage.setItem('exp-v3', JSON.stringify(expenses)); }
+function save() { localStorage.setItem('exp-v4', JSON.stringify(expenses)); }
 
 function fmt(n) {
   return '₪' + parseFloat(n).toLocaleString('he-IL', {minimumFractionDigits:2, maximumFractionDigits:2});
