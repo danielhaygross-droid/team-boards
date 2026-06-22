@@ -586,6 +586,7 @@ function switchBoard(b){
   Promise.all([loadShops(), loadLinks()]).then(() => render());
 }
 let _pendingWrite = 0;
+let _offlineToastShown = false; // prevents flooding toasts during a single offline episode
 const dk  = d => { const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; };
 const mkD = (y,m,d) => { const dt=new Date(y,m,d); dt.setHours(0,0,0,0); return dt; };
 
@@ -598,12 +599,23 @@ async function fbSet(p,data){
   try{
     const r=await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
     writeOk = r.ok;
-    if(!r.ok) setSyncStatus('off','offline');
+    if(!r.ok){
+      setSyncStatus('off','offline');
+      if(!_offlineToastShown){
+        _offlineToastShown = true;
+        toast(lang==='he'?'⚠️ שגיאת שמירה — הנתונים שמורים מקומית':'⚠️ Save failed — data kept locally');
+      }
+    } else {
+      _offlineToastShown = false; // reset on successful write
+    }
   }catch{
     setSyncStatus('off','offline');
+    if(!_offlineToastShown){
+      _offlineToastShown = true;
+      toast(lang==='he'?'📶 אין חיבור — הנתונים שמורים מקומית':'📶 Offline — data kept locally');
+    }
   } finally{
     _pendingWrite--;
-    // Only show "synced" when ALL pending writes are done and this one succeeded
     if(!_pendingWrite && writeOk) setSyncStatus('ok','synced');
   }
 }
@@ -1088,8 +1100,10 @@ function _remoteChanged(remote){
 let _pollPaused = false;
 document.addEventListener('visibilitychange', ()=>{
   _pollPaused = document.hidden;
-  // Tab just became visible — fetch immediately to catch up on missed updates
-  if(!document.hidden && !_pendingWrite) renderMain();
+  if(!document.hidden && !_pendingWrite){
+    _offlineToastShown = false; // allow offline toast again after returning to tab
+    renderMain();
+  }
 });
 
 setInterval(async()=>{
