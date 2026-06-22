@@ -247,7 +247,7 @@ main {
 
 .form-row {
   display: grid;
-  grid-template-columns: 2.2fr 1fr 1fr 1.1fr 1.5fr auto;
+  grid-template-columns: 2.2fr 1fr 1fr 1.1fr 0.9fr 1.5fr auto;
   gap: 12px;
   align-items: end;
 }
@@ -662,6 +662,10 @@ tbody td { padding: 14px 18px; font-size: 14px; color: var(--text-primary); vert
         </select>
       </div>
       <div class="field">
+        <label>תאריך</label>
+        <input type="date" id="inp-date" />
+      </div>
+      <div class="field">
         <label>הערות</label>
         <input type="text" id="inp-note" placeholder="הערה, קבלה..." />
       </div>
@@ -770,19 +774,31 @@ function setPayer(p) {
   });
 }
 
+function todayValue() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function formatDate(isoStr) {
+  if (!isoStr) return new Date().toLocaleDateString('he-IL', {day:'2-digit',month:'numeric',year:'2-digit'});
+  const [y,m,d] = isoStr.split('-');
+  return `${parseInt(d)}.${parseInt(m)}.${y.slice(2)}`;
+}
+
 function addExpense() {
   const desc = document.getElementById('inp-desc').value.trim();
   const amount = parseFloat(document.getElementById('inp-amount').value);
   const cat = document.getElementById('inp-cat').value;
   const note = document.getElementById('inp-note').value.trim();
+  const dateVal = document.getElementById('inp-date').value || todayValue();
   if (!desc) { document.getElementById('inp-desc').focus(); shake('inp-desc'); return; }
   if (!amount || amount <= 0) { document.getElementById('inp-amount').focus(); shake('inp-amount'); return; }
-  const today = new Date().toLocaleDateString('he-IL', {day:'2-digit',month:'2-digit',year:'2-digit'});
-  expenses.unshift({id:Date.now(), desc, amount, payer:currentPayer, cat, note, date:today});
+  const dateStr = formatDate(dateVal);
+  expenses.unshift({id:Date.now(), desc, amount, payer:currentPayer, cat, note, date:dateStr});
   save(); render();
   document.getElementById('inp-desc').value = '';
   document.getElementById('inp-amount').value = '';
   document.getElementById('inp-note').value = '';
+  document.getElementById('inp-date').value = todayValue();
   document.getElementById('inp-desc').focus();
   toast('✓ הוצאה נוספה בהצלחה');
 }
@@ -951,6 +967,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && ['inp-desc','inp-amount','inp-note'].includes(e.target.id)) addExpense();
 });
 
+document.getElementById('inp-date').value = todayValue();
 render();
 </script>
 </body>
