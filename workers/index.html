@@ -1015,16 +1015,24 @@ function toggleLang(){ lang=lang==='en'?'he':'en'; localStorage.setItem('wb_lang
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),1800); }
 
 // ═══ POLLING ═══
+function _remoteChanged(remote){
+  const local=getLocal(cur);
+  return JSON.stringify(remote.tasks||{})!==JSON.stringify(local.tasks||{})
+      || JSON.stringify(remote.custom||[])!==JSON.stringify(local.custom||[]);
+}
+
 setInterval(async()=>{
   if(_pendingWrite) return;
   const r=await fbGet(getBoardPath()+'/'+dk(cur));
   if(!r) return;
   if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[];
+  const changed=_remoteChanged(r); // check BEFORE overwriting localStorage
   setLocal(cur,r);
   if(['TEXTAREA','INPUT','SELECT'].includes(document.activeElement?.tagName)) return;
   if(document.getElementById('addForm')?.classList.contains('open')) return;
-  _renderGen++; // invalidate any in-flight renderMain
+  _renderGen++;
   _buildBoard(r); renderCal(); setSyncStatus('ok','synced');
+  if(changed) toast(lang==='he'?'🔄 עדכון מחבר צוות':'🔄 Updated by teammate');
 },20000);
 
 // ═══ INIT ═══
