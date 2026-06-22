@@ -576,13 +576,13 @@ function switchBoard(b){
   shops = []; links = []; _openId = null;
   Promise.all([loadShops(), loadLinks()]).then(() => render());
 }
-let _pendingWrite = false;
+let _pendingWrite = 0;
 const dk  = d => { const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; };
 const mkD = (y,m,d) => { const dt=new Date(y,m,d); dt.setHours(0,0,0,0); return dt; };
 
 function setSyncStatus(state, key){ document.getElementById('syncDot').className='sync-dot '+state; document.getElementById('syncLbl').textContent=tx()[key]||key; }
 async function fbGet(p){ try{ const r=await fetch(FB_URL+p+'.json'); if(r.ok) return await r.json(); }catch{} return null; }
-async function fbSet(p,data){ setSyncStatus('sync','saving'); _pendingWrite=true; try{ const r=await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}}); if(r.ok){ setSyncStatus('ok','synced'); }else{ setSyncStatus('off','offline'); } }catch{ setSyncStatus('off','offline'); } finally{ _pendingWrite=false; } }
+async function fbSet(p,data){ setSyncStatus('sync','saving'); _pendingWrite++; try{ const r=await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}}); if(r.ok){ setSyncStatus('ok','synced'); }else{ setSyncStatus('off','offline'); } }catch{ setSyncStatus('off','offline'); } finally{ _pendingWrite--; } }
 const localKey = d => 'wb_'+currentBoard+'_'+dk(d);
 const getLocal = d => { try{ const v=localStorage.getItem(localKey(d)); const r=v?JSON.parse(v):{}; if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[]; return r; }catch{ return{tasks:{},custom:[]}; } };
 const setLocal = (d,v) => { try{ localStorage.setItem(localKey(d),JSON.stringify(v)); }catch{} };
@@ -594,6 +594,7 @@ let cur = new Date(); cur.setHours(0,0,0,0);
 let calM = new Date(cur.getFullYear(), cur.getMonth(), 1);
 let _moveCtx = null, _assigneeCtx = null;
 let _openId = null;
+let _renderGen = 0;
 
 // ═══ LOGIN ═══
 function selectUser(key){
@@ -620,7 +621,9 @@ function renderHeader(){
 }
 
 async function renderMain(){
+  const gen = ++_renderGen;
   const dd = await loadDay(cur);
+  if(gen !== _renderGen) return;
   if(!dd.tasks) dd.tasks = {};
   if(!dd.custom) dd.custom = [];
   const t = tx(), lbl = DAILY_LABELS[lang];
@@ -743,7 +746,7 @@ function rowHTML(task, dd){
         <button class="status-btn ${S_CLS[status]}" onclick="openStatusMenu('${task.id}',this)">${S_ICON[status]} ${t[status]} ▾</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
-        <span class="badge b-${task.cat}">${catLbl}</span>
+        <span class="badge b-${task.cat}">${esc(catLbl)}</span>
         ${shopTagHTML(st.shop||task.shop||'', task.id)}
       </div>
       <div class="t-actions">
@@ -868,7 +871,8 @@ async function setStatus(id, status){
 const _noteTimers={};
 function debounceSave(id,v){
   clearTimeout(_noteTimers[id]);
-  _noteTimers[id]=setTimeout(()=>{ const dd=getLocal(cur); if(!dd.tasks[id])dd.tasks[id]={}; dd.tasks[id].notes=v; saveDay(cur,dd); },600);
+  const savedCur=cur;
+  _noteTimers[id]=setTimeout(()=>{ const dd=getLocal(savedCur); if(!dd.tasks[id])dd.tasks[id]={}; dd.tasks[id].notes=v; saveDay(savedCur,dd); },600);
 }
 
 function saveEdit(id, ci){
