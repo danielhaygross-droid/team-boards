@@ -624,7 +624,6 @@ function selectUser(key){
   const w = WORKERS[key];
   document.getElementById('userChipName').textContent = w.name;
   document.getElementById('userDot').style.background = w.color;
-  render();
 }
 function logout(){}
 
@@ -1041,6 +1040,7 @@ async function init(){
   setSyncStatus(r!==null?'ok':'off', r!==null?'synced':'offline');
   await loadShops();
   await loadLinks();
+  render();
 }
 init();
 </script>
