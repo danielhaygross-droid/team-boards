@@ -522,13 +522,14 @@ function openShopMenu(taskId, btn){
   menu.classList.add('open');
 }
 function closeShopMenu(){ document.getElementById('shopMenu').classList.remove('open'); _shopCtx=null; }
-async function setShop(taskId, shop){
+function setShop(taskId, shop){
   closeShopMenu();
   const dd = getLocal(cur);
   if(!dd.tasks[taskId]) dd.tasks[taskId]={};
   dd.tasks[taskId].shop = shop;
-  saveDay(cur, dd);
-  renderMain();
+  setLocal(cur, dd);
+  fbSet(getBoardPath()+'/'+dk(cur), dd);
+  _buildBoard(dd);
 }
 
 // ═══ FIREBASE ═══
@@ -560,7 +561,11 @@ function addLink(){
   const name = document.getElementById('linkName').value.trim();
   let url = document.getElementById('linkUrl').value.trim();
   if(!name || !url) return;
+  // Block dangerous URL schemes before adding https://
+  if(/^(javascript|data|file|vbscript|blob):/i.test(url)){ toast('❌ Invalid URL'); return; }
   if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  // Final check — must be a valid http/https URL
+  try{ const u = new URL(url); if(!/^https?:$/i.test(u.protocol)){ toast('❌ Invalid URL'); return; } }catch{ toast('❌ Invalid URL'); return; }
   links.unshift({name, url});
   saveLinks();
   document.getElementById('linkName').value = '';
@@ -574,7 +579,10 @@ function switchBoard(b){
   document.getElementById('tab-shared').classList.toggle('active', b==='shared');
   document.getElementById('tab-shachar').classList.toggle('active', b==='shachar');
   document.body.setAttribute('data-board', b);
+  // Reset ALL transient contexts so stale menus can't fire on the new board
   shops = []; links = []; _openId = null;
+  _moveCtx = null; _assigneeCtx = null; _shopCtx = null;
+  closeMove(); closeAssigneeMenu(); closeShopMenu(); closeStatusMenu();
   Promise.all([loadShops(), loadLinks()]).then(() => render());
 }
 let _pendingWrite = 0;
@@ -583,11 +591,36 @@ const mkD = (y,m,d) => { const dt=new Date(y,m,d); dt.setHours(0,0,0,0); return 
 
 function setSyncStatus(state, key){ document.getElementById('syncDot').className='sync-dot '+state; document.getElementById('syncLbl').textContent=tx()[key]||key; }
 async function fbGet(p){ try{ const r=await fetch(FB_URL+p+'.json'); if(r.ok) return await r.json(); }catch{} return null; }
-async function fbSet(p,data){ setSyncStatus('sync','saving'); _pendingWrite++; try{ const r=await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}}); if(r.ok){ setSyncStatus('ok','synced'); }else{ setSyncStatus('off','offline'); } }catch{ setSyncStatus('off','offline'); } finally{ _pendingWrite--; } }
+async function fbSet(p,data){
+  setSyncStatus('sync','saving');
+  _pendingWrite++;
+  let writeOk = false;
+  try{
+    const r=await fetch(FB_URL+p+'.json',{method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
+    writeOk = r.ok;
+    if(!r.ok) setSyncStatus('off','offline');
+  }catch{
+    setSyncStatus('off','offline');
+  } finally{
+    _pendingWrite--;
+    // Only show "synced" when ALL pending writes are done and this one succeeded
+    if(!_pendingWrite && writeOk) setSyncStatus('ok','synced');
+  }
+}
 const localKey = d => 'wb_'+currentBoard+'_'+dk(d);
 const getLocal = d => { try{ const v=localStorage.getItem(localKey(d)); const r=v?JSON.parse(v):{}; if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[]; return r; }catch{ return{tasks:{},custom:[]}; } };
 const setLocal = (d,v) => { try{ localStorage.setItem(localKey(d),JSON.stringify(v)); }catch{} };
-async function loadDay(d){ if(!_pendingWrite){ const r=await fbGet(getBoardPath()+'/'+dk(d)); if(r){ if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[]; setLocal(d,r); return r; } } return getLocal(d); }
+async function loadDay(d){
+  if(!_pendingWrite){
+    const r=await fbGet(getBoardPath()+'/'+dk(d));
+    // Re-check: a write may have started while the fetch was in flight
+    if(r && !_pendingWrite){
+      if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[]; if(!r.hidden)r.hidden=[]; if(!r.overrides)r.overrides={};
+      setLocal(d,r); return r;
+    }
+  }
+  return getLocal(d);
+}
 function saveDay(d,data){ setLocal(d,data); fbSet(getBoardPath()+'/'+dk(d),data); }
 
 // ═══ STATE ═══
@@ -861,9 +894,9 @@ function render(){ renderHeader(); renderMain(); renderCal(); }
 // ═══ ACTIONS ═══
 function toggleOpen(id){
   if(_openId===id){ _openId=null; } else { _openId=id; }
-  renderMain();
+  _buildBoard(getLocal(cur));
 }
-function closeOpen(){ _openId=null; renderMain(); }
+function closeOpen(){ _openId=null; _buildBoard(getLocal(cur)); }
 
 function openStatusMenu(id, btn){
   event.stopPropagation();
@@ -910,25 +943,37 @@ function saveEdit(id, ci){
   const dd=getLocal(cur);
   if(ci>=0){ const idx=dd.custom.findIndex(t=>t.id===id); if(idx>=0){dd.custom[idx].title=title;dd.custom[idx].desc=desc;} }
   else { if(!dd.overrides)dd.overrides={}; dd.overrides[id]={title,desc}; }
-  saveDay(cur,dd); toast(tx().tSaved); _openId=null; renderMain();
+  saveDay(cur,dd); toast(tx().tSaved); _openId=null; _buildBoard(getLocal(cur));
 }
 
 function showForm(){ document.getElementById('addForm').classList.add('open'); document.getElementById('aTitle').focus(); }
 function hideForm(){ document.getElementById('addForm').classList.remove('open'); }
 
+let _addingTask = false;
 function addTask(){
+  if(_addingTask) return;
   const title=document.getElementById('aTitle')?.value.trim(); if(!title) return;
+  _addingTask = true;
   const dd=getLocal(cur); if(!dd.custom)dd.custom=[];
   const aEl=document.getElementById('aAssignee');
   const assignee=aEl?.value||currentUser||'all';
   const shop = document.getElementById('aShop')?.value||'';
-  dd.custom.push({id:'c'+Date.now(),title,desc:document.getElementById('aDesc')?.value.trim()||'',cat:document.getElementById('aCat').value,assignee,shop});
+  // Unique ID: timestamp + random suffix prevents collisions on same millisecond
+  const newId = 'c'+Date.now()+'_'+Math.floor(Math.random()*99999);
+  dd.custom.push({id:newId,title,desc:document.getElementById('aDesc')?.value.trim()||'',cat:document.getElementById('aCat').value,assignee,shop});
   document.getElementById('aTitle').value=''; document.getElementById('aDesc').value='';
-  saveDay(cur,dd); hideForm(); toast(tx().tAdded); renderMain();
+  saveDay(cur,dd); hideForm(); toast(tx().tAdded); _buildBoard(dd);
+  setTimeout(()=>{ _addingTask=false; }, 500);
 }
 
 function delTask(id){
-  const dd=getLocal(cur); const i=dd.custom.findIndex(t=>t.id===id); if(i<0)return; dd.custom.splice(i,1); saveDay(cur,dd); toast(tx().tRemoved); renderMain();
+  // Clean up any pending note-save timer for this task
+  clearTimeout(_noteTimers[id]); delete _noteTimers[id];
+  const dd=getLocal(cur); const i=dd.custom.findIndex(t=>t.id===id); if(i<0)return;
+  dd.custom.splice(i,1);
+  // Also remove stale task state
+  if(dd.tasks[id]) delete dd.tasks[id];
+  saveDay(cur,dd); toast(tx().tRemoved); _buildBoard(getLocal(cur));
 }
 
 // ═══ ASSIGNEE MENU ═══
@@ -950,13 +995,14 @@ function openAssigneeMenu(id, ci, btn){
 }
 function closeAssigneeMenu(){ document.getElementById('assigneeMenu').classList.remove('open'); _assigneeCtx=null; }
 
-async function setAssignee(key){
+function setAssignee(key){
   const ctx=_assigneeCtx; closeAssigneeMenu();
+  if(!ctx) return;
   const dd=getLocal(cur);
   if(!dd.tasks[ctx.id]) dd.tasks[ctx.id]={};
   dd.tasks[ctx.id].assignee=key;
   if(ctx.ci>=0){ const idx=dd.custom.findIndex(t=>t.id===ctx.id); if(idx>=0) dd.custom[idx].assignee=key; }
-  saveDay(cur,dd); renderMain();
+  saveDay(cur,dd); _buildBoard(getLocal(cur));
 }
 
 // ═══ MOVE TASK ═══
@@ -987,12 +1033,18 @@ async function doMove(ts){
   const tdd=await loadDay(target); if(!tdd.custom)tdd.custom=[];
   const srcDd=await loadDay(cur);
   let taskData;
+  const srcState = srcDd.tasks[ctx.id] || {};
   if(ctx.ci>=0){ const ai=srcDd.custom.findIndex(t=>t.id===ctx.id); taskData=ai>=0?srcDd.custom[ai]:null; if(!taskData){ toast('Task not found'); return; } }
   else { const lbl=DAILY_LABELS[lang][ctx.id]||{title:ctx.id,desc:''}; const over=srcDd.overrides?.[ctx.id]||{}; taskData={title:over.title||lbl.title,desc:over.desc||lbl.desc,cat:DAILY_TMPL.find(t=>t.id===ctx.id)?.cat||'general',assignee:srcDd.tasks[ctx.id]?.assignee||'all'}; }
-  tdd.custom.push({id:'c'+Date.now(),title:taskData.title,desc:taskData.desc||'',cat:taskData.cat,assignee:taskData.assignee||'all'});
+  const newId = 'c'+Date.now()+'_'+Math.floor(Math.random()*99999);
+  tdd.custom.push({id:newId,title:taskData.title,desc:taskData.desc||'',cat:taskData.cat,assignee:taskData.assignee||'all',shop:srcState.shop||taskData.shop||''});
+  // Carry over notes (but reset status to pending — task is being moved, not done)
+  if(srcState.notes){ if(!tdd.tasks)tdd.tasks={}; tdd.tasks[newId]={notes:srcState.notes}; }
   saveDay(target,tdd);
   if(!srcDd.hidden)srcDd.hidden=[];
   if(ctx.ci>=0){ const di=srcDd.custom.findIndex(t=>t.id===ctx.id); if(di>=0)srcDd.custom.splice(di,1); } else { srcDd.hidden.push(ctx.id); }
+  // Clean up source task state
+  if(srcDd.tasks[ctx.id]) delete srcDd.tasks[ctx.id];
   saveDay(cur,srcDd);
   toast(tx().tMoved); renderMain(); renderCal();
 }
@@ -1028,14 +1080,25 @@ function toast(msg){ const el=document.getElementById('toast'); el.textContent=m
 function _remoteChanged(remote){
   const local=getLocal(cur);
   return JSON.stringify(remote.tasks||{})!==JSON.stringify(local.tasks||{})
-      || JSON.stringify(remote.custom||[])!==JSON.stringify(local.custom||[]);
+      || JSON.stringify(remote.custom||[])!==JSON.stringify(local.custom||[])
+      || JSON.stringify(remote.hidden||[])!==JSON.stringify(local.hidden||[])
+      || JSON.stringify(remote.overrides||{})!==JSON.stringify(local.overrides||{});
 }
 
+let _pollPaused = false;
+document.addEventListener('visibilitychange', ()=>{
+  _pollPaused = document.hidden;
+  // Tab just became visible — fetch immediately to catch up on missed updates
+  if(!document.hidden && !_pendingWrite) renderMain();
+});
+
 setInterval(async()=>{
-  if(_pendingWrite) return;
+  if(_pendingWrite || _pollPaused) return;
   const r=await fbGet(getBoardPath()+'/'+dk(cur));
   if(!r) return;
-  if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[];
+  // Re-check after async fetch — a write may have started while we were waiting
+  if(_pendingWrite) return;
+  if(!r.tasks)r.tasks={}; if(!r.custom)r.custom=[]; if(!r.hidden)r.hidden=[]; if(!r.overrides)r.overrides={};
   const changed=_remoteChanged(r); // check BEFORE overwriting localStorage
   setLocal(cur,r);
   if(['TEXTAREA','INPUT','SELECT'].includes(document.activeElement?.tagName)) return;
