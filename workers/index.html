@@ -184,6 +184,12 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
 /* ── SIDEBAR ── */
 .scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:12px}
 .scard-title{font-size:10.5px;font-weight:700;color:var(--t2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:11px}
+.link-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;transition:background .12s}
+.link-item:hover{background:var(--s2)}
+.link-item a{flex:1;font-size:12.5px;font-weight:500;color:var(--blue);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-item a:hover{text-decoration:underline}
+.link-del{background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:0 2px;line-height:1;transition:color .12s;flex-shrink:0}
+.link-del:hover{color:var(--red)}
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
 .cal-mname{font-size:13px;font-weight:600;color:var(--text)}
 .cal-arr{width:24px;height:24px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:12px;color:var(--t2)}
@@ -346,6 +352,18 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
         <button class="lang-btn" onclick="openShopModal()" id="manageShopsBtn">+ Manage</button>
       </div>
       <div id="shopsSidebar"></div>
+    </div>
+    <div class="scard" id="linksCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="scard-title" style="margin-bottom:0">🔗 LINKS</div>
+        <button class="lang-btn" onclick="toggleLinkForm()" id="addLinkBtn">+ Add</button>
+      </div>
+      <div id="linkFormWrap" style="display:none;margin-bottom:10px">
+        <input id="linkName" placeholder="Name" style="width:100%;height:32px;border:1px solid var(--border2);border-radius:6px;padding:0 9px;font-family:inherit;font-size:12.5px;margin-bottom:5px;outline:none" />
+        <input id="linkUrl" placeholder="https://..." style="width:100%;height:32px;border:1px solid var(--border2);border-radius:6px;padding:0 9px;font-family:inherit;font-size:12.5px;margin-bottom:6px;outline:none" />
+        <button onclick="addLink()" style="width:100%;height:30px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Save</button>
+      </div>
+      <div id="linksList"></div>
     </div>
   </aside>
 </div>
@@ -558,14 +576,47 @@ const FB_URL  = 'https://daniel-and-shahar-default-rtdb.firebaseio.com';
 let currentBoard = localStorage.getItem('wb_board') || 'shared';
 function getBoardPath(){ return currentBoard === 'shachar' ? '/shachar_days' : '/worker_days'; }
 function getBoardConfig(){ return currentBoard === 'shachar' ? '/shachar_config/shops' : '/worker_config/shops'; }
+function getBoardLinks(){ return currentBoard === 'shachar' ? '/shachar_config/links' : '/worker_config/links'; }
+
+let links = [];
+async function loadLinks(){ const r = await fbGet(getBoardLinks()); links = Array.isArray(r) ? r : []; renderLinks(); }
+async function saveLinks(){ await fbSet(getBoardLinks(), links); renderLinks(); }
+function renderLinks(){
+  const el = document.getElementById('linksList');
+  if(!el) return;
+  if(!links.length){ el.innerHTML = '<div style="font-size:12px;color:var(--t3);text-align:center;padding:6px 0">No links yet</div>'; return; }
+  el.innerHTML = links.map((l,i)=>`
+    <div class="link-item">
+      <a href="${l.url}" target="_blank" rel="noopener" title="${l.url}">🔗 ${l.name}</a>
+      <button class="link-del" onclick="deleteLink(${i})">✕</button>
+    </div>`).join('');
+}
+function toggleLinkForm(){
+  const w = document.getElementById('linkFormWrap');
+  w.style.display = w.style.display==='none' ? 'block' : 'none';
+  if(w.style.display==='block') document.getElementById('linkName').focus();
+}
+function addLink(){
+  const name = document.getElementById('linkName').value.trim();
+  let url = document.getElementById('linkUrl').value.trim();
+  if(!name || !url) return;
+  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  links.unshift({name, url});
+  saveLinks();
+  document.getElementById('linkName').value = '';
+  document.getElementById('linkUrl').value = '';
+  document.getElementById('linkFormWrap').style.display = 'none';
+}
+function deleteLink(i){ links.splice(i,1); saveLinks(); }
 function switchBoard(b){
   currentBoard = b;
   localStorage.setItem('wb_board', b);
   document.getElementById('tab-shared').classList.toggle('active', b==='shared');
   document.getElementById('tab-shachar').classList.toggle('active', b==='shachar');
   document.body.setAttribute('data-board', b);
-  shops = [];
+  shops = []; links = [];
   loadShops().then(() => render());
+  loadLinks();
 }
 async function loadShops(){ const r = await fbGet(getBoardConfig()); shops = Array.isArray(r) ? r : []; renderShopModal(); renderShopsSidebar(); }
 let _pendingWrite = false;
@@ -1010,6 +1061,7 @@ async function init(){
   const r=await fbGet(getBoardPath()+'/.json?shallow=true');
   setSyncStatus(r!==null?'ok':'off', r!==null?'synced':'offline');
   await loadShops();
+  await loadLinks();
 }
 init();
 </script>
