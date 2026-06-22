@@ -921,7 +921,7 @@ function render() {
       else owesHtml = `<span class="who blue">שווה — ${fmt(half)} כ"א ✓</span>`;
       const hasReceipt = e.note && (e.note.includes('קבלה') || e.note.includes('קבלות'));
       return `<tr>
-        <td class="td-desc">
+        <td class="td-desc" onclick="startEdit(${e.id}, this)" title="לחץ לעריכה" style="cursor:pointer;">
           <div class="desc-main">${e.desc}</div>
           ${e.note ? `<div class="desc-note">${e.note}</div>` : ''}
         </td>
@@ -961,6 +961,32 @@ function renderBreakdown(person, pfx) {
   body.innerHTML = entries.map(([cat, amt]) =>
     `<div class="bc-row"><span class="bc-cat">${cat}</span><span class="bc-amt">${fmt(amt)}</span></div>`
   ).join('');
+}
+
+function startEdit(id, cell) {
+  const e = expenses.find(x => x.id === id);
+  if (!e) return;
+  const origDesc = e.desc;
+  const origNote = e.note || '';
+  cell.innerHTML = `
+    <input id="edit-desc" value="${origDesc}" style="width:100%;height:32px;border:1.5px solid var(--navy);border-radius:6px;padding:0 8px;font-family:Heebo,sans-serif;font-size:14px;font-weight:700;direction:rtl;outline:none;margin-bottom:4px;" />
+    <input id="edit-note" value="${origNote}" placeholder="הערה..." style="width:100%;height:26px;border:1px solid var(--border);border-radius:5px;padding:0 8px;font-family:Heebo,sans-serif;font-size:12px;direction:rtl;outline:none;color:var(--text-muted);" />
+    <div style="display:flex;gap:6px;margin-top:5px;">
+      <button onclick="saveEdit(${id})" style="padding:3px 12px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-family:Heebo,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">שמור</button>
+      <button onclick="render()" style="padding:3px 10px;background:none;border:1px solid var(--border);border-radius:5px;font-family:Heebo,sans-serif;font-size:12px;cursor:pointer;">ביטול</button>
+    </div>`;
+  cell.querySelector('#edit-desc').focus();
+  cell.onclick = null;
+}
+
+function saveEdit(id) {
+  const desc = document.getElementById('edit-desc').value.trim();
+  const note = document.getElementById('edit-note').value.trim();
+  if (!desc) return;
+  const e = expenses.find(x => x.id === id);
+  if (e) { e.desc = desc; e.note = note; }
+  save(); render();
+  toast('✓ הוצאה עודכנה');
 }
 
 document.addEventListener('keydown', e => {
