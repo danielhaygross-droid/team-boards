@@ -666,6 +666,8 @@ function renderHeader(){
 
 async function renderMain(){
   const dd = await loadDay(cur);
+  if(!dd.tasks) dd.tasks = {};
+  if(!dd.custom) dd.custom = [];
   const t = tx(), lbl = DAILY_LABELS[lang];
 
   const rotated = getDailyAssignee(cur);
