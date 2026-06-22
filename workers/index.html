@@ -491,7 +491,7 @@ function renderShopModal(){
   if(!shops.length){ list.innerHTML=`<div class="shop-empty">${t.noShopsYet||'No shops yet'}</div>`; return; }
   list.innerHTML = shops.map((s,i)=>`
     <div class="shop-item">
-      <span class="shop-item-name">🏪 ${s}</span>
+      <span class="shop-item-name">🏪 ${esc(s)}</span>
       <button class="shop-del" onclick="removeShop(${i})">✕</button>
     </div>`).join('');
 }
@@ -500,11 +500,11 @@ function renderShopsSidebar(){
   if(!el) return;
   const t = tx();
   if(!shops.length){ el.innerHTML=`<div style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">${t.noShopsYet||'No shops yet'}</div>`; return; }
-  el.innerHTML = shops.map(s=>`<div style="font-size:12px;color:var(--t2);padding:4px 0;display:flex;align-items:center;gap:6px"><span style="font-size:14px">🏪</span>${s}</div>`).join('');
+  el.innerHTML = shops.map(s=>`<div style="font-size:12px;color:var(--t2);padding:4px 0;display:flex;align-items:center;gap:6px"><span style="font-size:14px">🏪</span>${esc(s)}</div>`).join('');
 }
 function shopTagHTML(shop, taskId){
   const t = tx();
-  if(shop) return `<div class="shop-tag" onclick="event.stopPropagation();openShopMenu('${taskId}',this)">🏪 ${shop}</div>`;
+  if(shop) return `<div class="shop-tag" onclick="event.stopPropagation();openShopMenu('${taskId}',this)">🏪 ${esc(shop)}</div>`;
   return `<div class="shop-tag unset" onclick="event.stopPropagation();openShopMenu('${taskId}',this)">${t.addShop||'+ Shop'}</div>`;
 }
 function openShopMenu(taskId, btn){
@@ -546,7 +546,7 @@ function renderLinks(){
   if(!links.length){ el.innerHTML = '<div style="font-size:12px;color:var(--t3);text-align:center;padding:6px 0">No links yet</div>'; return; }
   el.innerHTML = links.map((l,i)=>`
     <div class="link-item">
-      <a href="${l.url}" target="_blank" rel="noopener" title="${l.url}">🔗 ${l.name}</a>
+      <a href="${esc(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}">🔗 ${esc(l.name)}</a>
       <button class="link-del" onclick="deleteLink(${i})">✕</button>
     </div>`).join('');
 }
@@ -703,7 +703,7 @@ async function renderMain(){
           </select>
           <select class="fsel" id="aShop">
             <option value="">${t.noShop||'— No shop —'}</option>
-            ${shops.map(s=>`<option value="${s}">${s}</option>`).join('')}
+            ${shops.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}
           </select>
         </div>
         <div class="form-btns">
@@ -726,7 +726,7 @@ function rowHTML(task, dd){
   const catLbl = t.cats[task.cat]||task.cat;
   const ciAttr = task._c ? task._ci : -1;
   const isOpen = _openId === task.id;
-  const notesPreview = st.notes ? `<div class="tc-notes-preview">📝 ${st.notes.substring(0,40)}${st.notes.length>40?'…':''}</div>` : '';
+  const notesPreview = st.notes ? `<div class="tc-notes-preview">📝 ${esc(st.notes.substring(0,40))}${st.notes.length>40?'…':''}</div>` : '';
 
   return `
     <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''}" onclick="toggleOpen('${task.id}')">
@@ -890,6 +890,7 @@ function addTask(){
   const assignee=aEl?.value||currentUser||'all';
   const shop = document.getElementById('aShop')?.value||'';
   dd.custom.push({id:'c'+Date.now(),title,desc:document.getElementById('aDesc')?.value.trim()||'',cat:document.getElementById('aCat').value,assignee,shop});
+  document.getElementById('aTitle').value=''; document.getElementById('aDesc').value='';
   saveDay(cur,dd); hideForm(); toast(tx().tAdded); renderMain();
 }
 
@@ -953,7 +954,7 @@ async function doMove(ts){
   const tdd=await loadDay(target); if(!tdd.custom)tdd.custom=[];
   const srcDd=await loadDay(cur);
   let taskData;
-  if(ctx.ci>=0){ taskData=srcDd.custom[ctx.ci]; }
+  if(ctx.ci>=0){ taskData=srcDd.custom[ctx.ci]; if(!taskData){ toast('Task not found'); return; } }
   else { const lbl=DAILY_LABELS[lang][ctx.id]||{title:ctx.id,desc:''}; const over=srcDd.overrides?.[ctx.id]||{}; taskData={title:over.title||lbl.title,desc:over.desc||lbl.desc,cat:DAILY_TMPL.find(t=>t.id===ctx.id)?.cat||'general',assignee:srcDd.tasks[ctx.id]?.assignee||'all'}; }
   tdd.custom.push({id:'c'+Date.now(),title:taskData.title,desc:taskData.desc||'',cat:taskData.cat,assignee:taskData.assignee||'all'});
   saveDay(target,tdd);
@@ -984,7 +985,7 @@ function applyLang(){
   document.getElementById('legD').textContent=t.done;
   document.getElementById('legS').textContent=t.stuck;
 }
-function toggleLang(){ lang=lang==='en'?'he':'en'; localStorage.setItem('wb_lang',lang); applyLang(); }
+function toggleLang(){ lang=lang==='en'?'he':'en'; localStorage.setItem('wb_lang',lang); applyLang(); render(); }
 
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),1800); }
 
@@ -1008,8 +1009,8 @@ async function init(){
   document.getElementById('tab-shachar').classList.toggle('active', currentBoard==='shachar');
   document.body.setAttribute('data-board', currentBoard);
   selectUser('admin');
-  const r=await fbGet(getBoardPath()+'/.json?shallow=true');
-  setSyncStatus(r!==null?'ok':'off', r!==null?'synced':'offline');
+  const r=await fetch(FB_URL+getBoardPath()+'.json?shallow=true').then(x=>x.ok).catch(()=>false);
+  setSyncStatus(r?'ok':'off', r?'synced':'offline');
   await loadShops();
   await loadLinks();
   render();
