@@ -67,6 +67,9 @@ body.he{direction:rtl} body.en{direction:ltr}
 .user-dot{width:8px;height:8px;border-radius:50%}
 .lang-btn{padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:var(--s2);font-size:11.5px;font-weight:500;cursor:pointer;color:var(--t2);transition:all .15s}
 .lang-btn:hover{background:var(--surface);color:var(--text)}
+.board-tabs{display:flex;gap:3px;background:var(--s3);border-radius:10px;padding:3px}
+.board-tab{padding:5px 14px;border-radius:7px;border:none;background:transparent;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--t2);font-family:inherit;transition:all .15s;white-space:nowrap}
+.board-tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 
 /* ── LAYOUT ── */
 .wrap{max-width:1160px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:1fr 272px;gap:18px}
@@ -275,6 +278,10 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
 <header class="hdr">
   <div class="hdr-inner">
     <div class="logo">🛍️ <span id="logoTxt">Worker Board</span></div>
+    <div class="board-tabs" id="boardTabs">
+      <button class="board-tab active" id="tab-shared" onclick="switchBoard('shared')">דניאל ושחר</button>
+      <button class="board-tab" id="tab-shachar" onclick="switchBoard('shachar')">שחר</button>
+    </div>
     <div class="date-nav">
       <button class="nav-arr" onclick="shiftDay(-1)">›</button>
       <div class="date-box">
@@ -466,12 +473,13 @@ let shops = [];
 let _shopCtx = null;
 
 async function loadShops(){
-  const r = await fbGet('/worker_config/shops');
+  const r = await fbGet(getBoardConfig());
   shops = Array.isArray(r) ? r : [];
   renderShopsSidebar();
+  renderShopModal();
 }
 async function saveShops(){
-  await fbSet('/worker_config/shops', shops);
+  await fbSet(getBoardConfig(), shops);
   renderShopsSidebar();
   renderShopModal();
 }
@@ -543,7 +551,18 @@ async function setShop(taskId, shop){
 
 // ═══ FIREBASE ═══
 const FB_URL  = 'https://daniel-and-shahar-default-rtdb.firebaseio.com';
-const FB_PATH = '/worker_days';
+let currentBoard = localStorage.getItem('wb_board') || 'shared';
+function getBoardPath(){ return currentBoard === 'shachar' ? '/shachar_days' : '/worker_days'; }
+function getBoardConfig(){ return currentBoard === 'shachar' ? '/shachar_config/shops' : '/worker_config/shops'; }
+function switchBoard(b){
+  currentBoard = b;
+  localStorage.setItem('wb_board', b);
+  document.getElementById('tab-shared').classList.toggle('active', b==='shared');
+  document.getElementById('tab-shachar').classList.toggle('active', b==='shachar');
+  shops = [];
+  loadShops().then(() => render());
+}
+async function loadShops(){ const r = await fbGet(getBoardConfig()); shops = Array.isArray(r) ? r : []; renderShopModal(); renderShopsSidebar(); }
 let _pendingWrite = false;
 const dk  = d => d.toISOString().split('T')[0];
 const mkD = (y,m,d) => { const dt=new Date(y,m,d); dt.setHours(0,0,0,0); return dt; };
@@ -554,8 +573,8 @@ async function fbSet(p,data){ setSyncStatus('sync','saving'); _pendingWrite=true
 const getLocal = d => { try{ const v=localStorage.getItem('wb_'+dk(d)); return v?JSON.parse(v):{tasks:{},custom:[]}; }catch{ return{tasks:{},custom:[]}; } };
 const setLocal = (d,v) => { try{ localStorage.setItem('wb_'+dk(d),JSON.stringify(v)); }catch{} };
 function mergeDay(local,remote){ const mc=(l,r)=>{const ids=new Set(r.map(t=>t.id));return[...r,...l.filter(t=>!ids.has(t.id))]}; return{tasks:{...remote.tasks,...local.tasks},custom:mc(local.custom||[],remote.custom||[]),hidden:[...new Set([...(local.hidden||[]),...(remote.hidden||[])])]}; }
-async function loadDay(d){ if(!_pendingWrite){ const r=await fbGet(FB_PATH+'/'+dk(d)); if(r){ const m=mergeDay(getLocal(d),r); setLocal(d,m); return m; } } return getLocal(d); }
-function saveDay(d,data){ setLocal(d,data); fbSet(FB_PATH+'/'+dk(d),data); }
+async function loadDay(d){ if(!_pendingWrite){ const r=await fbGet(getBoardPath()+'/'+dk(d)); if(r){ const m=mergeDay(getLocal(d),r); setLocal(d,m); return m; } } return getLocal(d); }
+function saveDay(d,data){ setLocal(d,data); fbSet(getBoardPath()+'/'+dk(d),data); }
 
 // ═══ STATE ═══
 let cur = new Date(); cur.setHours(0,0,0,0);
@@ -966,7 +985,7 @@ function toast(msg){ const el=document.getElementById('toast'); el.textContent=m
 // ═══ POLLING ═══
 setInterval(async()=>{
   if(!currentUser||_pendingWrite) return;
-  const r=await fbGet(FB_PATH+'/'+dk(cur));
+  const r=await fbGet(getBoardPath()+'/'+dk(cur));
   if(!r) return;
   const m=mergeDay(getLocal(cur),r); setLocal(cur,m);
   if(['TEXTAREA','INPUT','SELECT'].includes(document.activeElement?.tagName)) return;
@@ -978,9 +997,11 @@ setInterval(async()=>{
 async function init(){
   setSyncStatus('sync','connecting');
   applyLang();
+  document.getElementById('tab-shared').classList.toggle('active', currentBoard==='shared');
+  document.getElementById('tab-shachar').classList.toggle('active', currentBoard==='shachar');
   const saved=localStorage.getItem('wb_user');
   if(saved && WORKERS[saved]){ selectUser(saved); }
-  const r=await fbGet(FB_PATH+'/.json?shallow=true');
+  const r=await fbGet(getBoardPath()+'/.json?shallow=true');
   setSyncStatus(r!==null?'ok':'off', r!==null?'synced':'offline');
   await loadShops();
 }
