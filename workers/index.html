@@ -729,12 +729,15 @@ async function renderMain(){
     if(remoteDd){
       if(!remoteDd.tasks)remoteDd.tasks={};
       if(!remoteDd.custom)remoteDd.custom=[];
-      setLocal(cur,remoteDd);
-      // Don't overwrite DOM if user is actively editing
-      const activeTag=document.activeElement?.tagName;
-      const formOpen=document.getElementById('addForm')?.classList.contains('open');
-      if(!['TEXTAREA','INPUT','SELECT'].includes(activeTag)&&!formOpen){
-        _buildBoard(remoteDd);
+      // Re-check: a write may have started while the fetch was in flight
+      if(!_pendingWrite){
+        setLocal(cur,remoteDd);
+        // Don't overwrite DOM if user is actively editing
+        const activeTag=document.activeElement?.tagName;
+        const formOpen=document.getElementById('addForm')?.classList.contains('open');
+        if(!['TEXTAREA','INPUT','SELECT'].includes(activeTag)&&!formOpen){
+          _buildBoard(remoteDd);
+        }
       }
     }
   }
@@ -771,7 +774,7 @@ function rowHTML(task, dd){
       </div>
       <div class="t-actions">
         <button class="icon-btn" onclick="event.stopPropagation();openMove('${task.id}',${ciAttr},this)">→</button>
-        <button class="icon-btn del" onclick="event.stopPropagation();${task._c?`delTask(${task._ci})`:`hideTask('${task.id}')`}">✕</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();${task._c?`delTask('${task.id}')`:`hideTask('${task.id}')`}">✕</button>
       </div>
     </div>
     <div class="trow-detail ${isOpen?'open':''}" id="det_${task.id}" onclick="event.stopPropagation()">
@@ -904,7 +907,7 @@ function saveEdit(id, ci){
   const title=document.getElementById('et_'+id)?.value.trim(); if(!title) return;
   const desc=document.getElementById('ed_'+id)?.value.trim()||'';
   const dd=getLocal(cur);
-  if(ci>=0){ if(dd.custom[ci]){dd.custom[ci].title=title;dd.custom[ci].desc=desc;} }
+  if(ci>=0){ const idx=dd.custom.findIndex(t=>t.id===id); if(idx>=0){dd.custom[idx].title=title;dd.custom[idx].desc=desc;} }
   else { if(!dd.overrides)dd.overrides={}; dd.overrides[id]={title,desc}; }
   saveDay(cur,dd); toast(tx().tSaved); _openId=null; renderMain();
 }
@@ -923,8 +926,8 @@ function addTask(){
   saveDay(cur,dd); hideForm(); toast(tx().tAdded); renderMain();
 }
 
-function delTask(i){
-  const dd=getLocal(cur); dd.custom.splice(i,1); saveDay(cur,dd); toast(tx().tRemoved); renderMain();
+function delTask(id){
+  const dd=getLocal(cur); const i=dd.custom.findIndex(t=>t.id===id); if(i<0)return; dd.custom.splice(i,1); saveDay(cur,dd); toast(tx().tRemoved); renderMain();
 }
 
 // ═══ ASSIGNEE MENU ═══
@@ -951,7 +954,7 @@ async function setAssignee(key){
   const dd=getLocal(cur);
   if(!dd.tasks[ctx.id]) dd.tasks[ctx.id]={};
   dd.tasks[ctx.id].assignee=key;
-  if(ctx.ci>=0 && dd.custom[ctx.ci]) dd.custom[ctx.ci].assignee=key;
+  if(ctx.ci>=0){ const idx=dd.custom.findIndex(t=>t.id===ctx.id); if(idx>=0) dd.custom[idx].assignee=key; }
   saveDay(cur,dd); renderMain();
 }
 
@@ -983,12 +986,12 @@ async function doMove(ts){
   const tdd=await loadDay(target); if(!tdd.custom)tdd.custom=[];
   const srcDd=await loadDay(cur);
   let taskData;
-  if(ctx.ci>=0){ taskData=srcDd.custom[ctx.ci]; if(!taskData){ toast('Task not found'); return; } }
+  if(ctx.ci>=0){ const ai=srcDd.custom.findIndex(t=>t.id===ctx.id); taskData=ai>=0?srcDd.custom[ai]:null; if(!taskData){ toast('Task not found'); return; } }
   else { const lbl=DAILY_LABELS[lang][ctx.id]||{title:ctx.id,desc:''}; const over=srcDd.overrides?.[ctx.id]||{}; taskData={title:over.title||lbl.title,desc:over.desc||lbl.desc,cat:DAILY_TMPL.find(t=>t.id===ctx.id)?.cat||'general',assignee:srcDd.tasks[ctx.id]?.assignee||'all'}; }
   tdd.custom.push({id:'c'+Date.now(),title:taskData.title,desc:taskData.desc||'',cat:taskData.cat,assignee:taskData.assignee||'all'});
   saveDay(target,tdd);
   if(!srcDd.hidden)srcDd.hidden=[];
-  if(ctx.ci>=0){ srcDd.custom.splice(ctx.ci,1); } else { srcDd.hidden.push(ctx.id); }
+  if(ctx.ci>=0){ const di=srcDd.custom.findIndex(t=>t.id===ctx.id); if(di>=0)srcDd.custom.splice(di,1); } else { srcDd.hidden.push(ctx.id); }
   saveDay(cur,srcDd);
   toast(tx().tMoved); renderMain(); renderCal();
 }
