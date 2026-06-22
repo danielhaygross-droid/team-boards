@@ -751,7 +751,8 @@ function rowHTML(task, dd){
   const assignee = st.assignee || task.assignee || 'all';
   const catLbl = t.cats[task.cat]||task.cat;
   const ciAttr = task._c ? task._ci : -1;
-  const isOpen = _openId === task.id;
+  const hasNotes = !!(st.notes && st.notes.trim());
+  const isOpen = _openId === task.id || hasNotes;
   const notesPreview = st.notes ? `<div class="tc-notes-preview">📝 ${esc(st.notes.substring(0,40))}${st.notes.length>40?'…':''}</div>` : '';
 
   return `
