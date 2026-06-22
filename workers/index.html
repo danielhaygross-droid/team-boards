@@ -261,28 +261,6 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
 </head>
 <body class="en">
 
-<!-- LOGIN -->
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-box">
-    <div class="login-logo">🛍️</div>
-    <div class="login-title" id="loginTitle">Who are you?</div>
-    <div class="login-sub" id="loginSub">Select your name to see your tasks</div>
-    <div class="login-grid">
-      <div class="login-card" id="card-harry" onclick="selectUser('harry')">
-        <div class="login-avatar">👨‍💻</div>
-        <div class="login-name">Harry</div>
-        <div class="login-role" id="role-harry">Worker</div>
-      </div>
-      <div class="login-card" id="card-erwin" onclick="selectUser('erwin')">
-        <div class="login-avatar">👨‍🎨</div>
-        <div class="login-name">Erwin</div>
-        <div class="login-role" id="role-erwin">Worker</div>
-      </div>
-    </div>
-    <hr class="login-divider">
-    <button class="login-admin-btn" onclick="selectUser('admin')">⚙️ <span id="adminBtnTxt">Admin View (Daniel / Shahar)</span></button>
-  </div>
-</div>
 
 <!-- HEADER -->
 <header class="hdr">
@@ -643,13 +621,12 @@ let _openId = null;
 function selectUser(key){
   currentUser = key;
   localStorage.setItem('wb_user', key);
-  document.getElementById('loginOverlay').style.display='none';
   const w = WORKERS[key];
   document.getElementById('userChipName').textContent = w.name;
   document.getElementById('userDot').style.background = w.color;
   render();
 }
-function logout(){ currentUser=null; localStorage.removeItem('wb_user'); document.getElementById('loginOverlay').style.display='flex'; }
+function logout(){}
 
 function visibleToUser(){ return true; }
 
@@ -1043,7 +1020,7 @@ function toast(msg){ const el=document.getElementById('toast'); el.textContent=m
 
 // ═══ POLLING ═══
 setInterval(async()=>{
-  if(!currentUser||_pendingWrite) return;
+  if(_pendingWrite) return;
   const r=await fbGet(getBoardPath()+'/'+dk(cur));
   if(!r) return;
   setLocal(cur,r);
@@ -1059,8 +1036,7 @@ async function init(){
   document.getElementById('tab-shared').classList.toggle('active', currentBoard==='shared');
   document.getElementById('tab-shachar').classList.toggle('active', currentBoard==='shachar');
   document.body.setAttribute('data-board', currentBoard);
-  const saved=localStorage.getItem('wb_user');
-  if(saved && WORKERS[saved]){ selectUser(saved); }
+  selectUser('admin');
   const r=await fbGet(getBoardPath()+'/.json?shallow=true');
   setSyncStatus(r!==null?'ok':'off', r!==null?'synced':'offline');
   await loadShops();
