@@ -236,6 +236,10 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
 .shop-opt:hover{background:var(--green-l);color:var(--green)}
 .shop-opt.unset-opt{color:var(--t3)}
 
+/* ── NEW BADGE ── */
+.new-badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:800;background:#F97316;color:#fff;letter-spacing:.07em;vertical-align:middle;margin-inline-end:6px;animation:newglow 1.8s ease-in-out infinite}
+@keyframes newglow{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(249,115,22,.4)}50%{opacity:.85;box-shadow:0 0 0 5px rgba(249,115,22,0)}}
+
 /* ── TOAST ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--text);color:#fff;padding:8px 18px;border-radius:20px;font-size:12.5px;font-weight:500;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:999}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -799,12 +803,14 @@ function rowHTML(task, dd){
   const hasNotes = !!(st.notes && st.notes.trim());
   const isOpen = _openId === task.id || hasNotes;
   const notesPreview = st.notes ? `<div class="tc-notes-preview">📝 ${esc(st.notes.substring(0,40))}${st.notes.length>40?'…':''}</div>` : '';
+  const NEW_MS = 30 * 60 * 1000;
+  const isNew = task._c && task.createdAt && status==='pending' && (Date.now()-task.createdAt) < NEW_MS;
 
   return `
     <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''}" id="row_${task.id}" onclick="toggleOpen('${task.id}')">
       <div class="t-strip ${STRIP[status]}"></div>
       <div class="t-info">
-        <div class="tc-title">${esc(task.title)}</div>
+        <div class="tc-title">${isNew?`<span class="new-badge">NEW</span>`:''}${esc(task.title)}</div>
         ${task.desc&&!isOpen?`<div class="tc-desc">${esc(task.desc)}</div>`:''}
         ${notesPreview}
       </div>
@@ -972,7 +978,7 @@ function addTask(){
   const shop = document.getElementById('aShop')?.value||'';
   // Unique ID: timestamp + random suffix prevents collisions on same millisecond
   const newId = 'c'+Date.now()+'_'+Math.floor(Math.random()*99999);
-  dd.custom.push({id:newId,title,desc:document.getElementById('aDesc')?.value.trim()||'',cat:document.getElementById('aCat').value,assignee,shop});
+  dd.custom.push({id:newId,title,desc:document.getElementById('aDesc')?.value.trim()||'',cat:document.getElementById('aCat').value,assignee,shop,createdAt:Date.now()});
   document.getElementById('aTitle').value=''; document.getElementById('aDesc').value='';
   saveDay(cur,dd); hideForm(); toast(tx().tAdded); _buildBoard(dd);
   setTimeout(()=>{ _addingTask=false; }, 500);
@@ -1049,7 +1055,7 @@ async function doMove(ts){
   if(ctx.ci>=0){ const ai=srcDd.custom.findIndex(t=>t.id===ctx.id); taskData=ai>=0?srcDd.custom[ai]:null; if(!taskData){ toast('Task not found'); return; } }
   else { const lbl=DAILY_LABELS[lang][ctx.id]||{title:ctx.id,desc:''}; const over=srcDd.overrides?.[ctx.id]||{}; taskData={title:over.title||lbl.title,desc:over.desc||lbl.desc,cat:DAILY_TMPL.find(t=>t.id===ctx.id)?.cat||'general',assignee:srcDd.tasks[ctx.id]?.assignee||'all'}; }
   const newId = 'c'+Date.now()+'_'+Math.floor(Math.random()*99999);
-  tdd.custom.push({id:newId,title:taskData.title,desc:taskData.desc||'',cat:taskData.cat,assignee:taskData.assignee||'all',shop:srcState.shop||taskData.shop||''});
+  tdd.custom.push({id:newId,title:taskData.title,desc:taskData.desc||'',cat:taskData.cat,assignee:taskData.assignee||'all',shop:srcState.shop||taskData.shop||'',createdAt:Date.now()});
   // Carry over notes (but reset status to pending — task is being moved, not done)
   if(srcState.notes){ if(!tdd.tasks)tdd.tasks={}; tdd.tasks[newId]={notes:srcState.notes}; }
   saveDay(target,tdd);
