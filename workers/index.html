@@ -810,11 +810,12 @@ function rowHTML(task, dd){
     <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''}" id="row_${task.id}" onclick="toggleOpen('${task.id}')">
       <div class="t-strip ${STRIP[status]}"></div>
       <div class="t-info">
-        <div class="tc-title">${isNew?`<span class="new-badge">NEW</span>`:''}${esc(task.title)}</div>
+        <div class="tc-title">${esc(task.title)}</div>
         ${task.desc&&!isOpen?`<div class="tc-desc">${esc(task.desc)}</div>`:''}
         ${notesPreview}
       </div>
-      <div onclick="event.stopPropagation()">
+      <div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:flex-start;gap:3px">
+        ${isNew?`<span class="new-badge">✦ NEW</span>`:''}
         ${assigneePill(assignee, task.id, ciAttr)}
       </div>
       <div onclick="event.stopPropagation()">
