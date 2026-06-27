@@ -241,6 +241,48 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
 .eta-sel:hover{background:var(--surface);color:var(--text)}
 .eta-sel:focus{border-color:var(--blue)}
 
+/* ── PRIORITY ── */
+.priority-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:1px 8px;border-radius:20px;margin-top:3px;border:1px solid transparent}
+.p-urgent{background:#FDECEC;color:#B53030;border-color:#F4BBBB}
+.p-low{background:#E2F5F1;color:#0A6B5A;border-color:#9FE0D3}
+.trow.urgent-row{background:#FFF7F7}.trow.urgent-row:hover{background:#FFEDED}
+.priority-group{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.priority-lbl{font-size:11px;font-weight:600;color:var(--t2);white-space:nowrap}
+.prio-btn{padding:3px 11px;border-radius:20px;border:1px solid var(--border2);font-size:11px;font-weight:600;font-family:inherit;background:var(--s2);color:var(--t2);cursor:pointer;transition:all .15s}
+.prio-btn:hover{background:var(--surface)}
+.prio-btn.active-urgent{background:#FDECEC;color:#B53030;border-color:#F4BBBB}
+.prio-btn.active-normal{background:var(--blue-l);color:var(--blue);border-color:var(--blue-b)}
+.prio-btn.active-low{background:#E2F5F1;color:#0A6B5A;border-color:#9FE0D3}
+
+/* ── TASK CHAT ── */
+.chat-wrap{border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;background:var(--surface);margin-bottom:8px}
+.chat-log{max-height:200px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.chat-log:empty::after{content:attr(data-empty);display:block;text-align:center;color:var(--t3);font-size:12px;padding:12px 0}
+.chat-msg{display:flex;flex-direction:column;max-width:82%}
+.chat-me{align-self:flex-end;align-items:flex-end}
+.chat-them{align-self:flex-start}
+.chat-meta{font-size:10px;color:var(--t3);margin-bottom:2px}
+.chat-text{font-size:12.5px;line-height:1.55;padding:7px 12px;border-radius:10px;word-break:break-word}
+.chat-me .chat-text{background:var(--blue);color:#fff;border-radius:10px 10px 2px 10px}
+.chat-them .chat-text{background:var(--s3);color:var(--text);border-radius:10px 10px 10px 2px}
+.chat-legacy{font-size:12px;color:var(--t2);padding:8px 11px;background:var(--s2);border-radius:var(--r);font-style:italic;border:1px solid var(--border)}
+.chat-footer{display:flex;align-items:center;gap:6px;padding:7px 10px;border-top:1px solid var(--border);background:var(--s2)}
+.chat-who{border:1px solid var(--border2);border-radius:20px;padding:3px 8px;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);color:var(--text);outline:none;cursor:pointer;flex-shrink:0}
+.chat-inp{flex:1;border:1px solid var(--border2);border-radius:20px;padding:5px 13px;font-size:12.5px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+body.he .chat-inp{direction:rtl} body.en .chat-inp{direction:ltr}
+.chat-inp:focus{border-color:var(--blue)}
+.chat-send{width:30px;height:30px;border-radius:50%;border:none;background:var(--blue);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;line-height:1}
+.chat-send:hover{background:#155a9e}
+
+/* ── STATUS LOG ── */
+.status-log{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;padding:6px 8px;background:var(--s2);border-radius:var(--r);border:1px solid var(--border)}
+.status-log-title{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.slog-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.slog-from{color:var(--t3);font-size:10.5px}
+.slog-arr{color:var(--t3);font-size:10px}
+.slog-who{color:var(--t3);font-size:10.5px}
+.slog-time{color:var(--t3);font-size:10px;margin-inline-start:auto}
+
 /* ── NEW BADGE ── */
 .new-badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:800;background:#F97316;color:#fff;letter-spacing:.07em;vertical-align:middle;margin-inline-end:6px;animation:newglow 1.8s ease-in-out infinite}
 @keyframes newglow{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(249,115,22,.4)}50%{opacity:.85;box-shadow:0 0 0 5px rgba(249,115,22,0)}}
@@ -453,6 +495,82 @@ const DAILY_LABELS = {
     d_shops_pm: {title:'סיבוב על החנויות — ערב',  desc:'בדיקה שנייה: הזמנות, ביקורות, בעיות'},
   }
 };
+
+// ═══ CHAT USERS ═══
+const CHAT_USERS = ['Harry','Erwin','Daniel','Shahar'];
+function getChatUser(){ return localStorage.getItem('wb_chat_user')||'Harry'; }
+function setChatUser(n){ localStorage.setItem('wb_chat_user',n); }
+
+function chatBubble(m, meUser){
+  const d=new Date(m.ts);
+  const time=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+  const day=d.toLocaleDateString(lang==='he'?'he-IL':'en-GB',{day:'2-digit',month:'2-digit'});
+  const isMe=m.user===meUser;
+  return `<div class="chat-msg ${isMe?'chat-me':'chat-them'}">
+    <div class="chat-meta">${esc(m.user)} · ${time} ${day}</div>
+    <div class="chat-text">${esc(m.text).replace(/\n/g,'<br>')}</div>
+  </div>`;
+}
+
+function renderChatLog(msgs, legacyNotes, meUser){
+  let html='';
+  if(legacyNotes && !msgs.length) html+=`<div class="chat-legacy">📝 ${esc(legacyNotes)}</div>`;
+  html+=msgs.map(m=>chatBubble(m,meUser)).join('');
+  return html;
+}
+
+function sendMsg(taskId){
+  const inp=document.getElementById('chatinp_'+taskId);
+  const text=inp?.value.trim(); if(!text) return;
+  const dd=getLocal(cur);
+  if(!dd.tasks[taskId])dd.tasks[taskId]={};
+  if(!dd.tasks[taskId].msgs)dd.tasks[taskId].msgs=[];
+  const me=getChatUser();
+  dd.tasks[taskId].msgs.push({user:me,text,ts:Date.now()});
+  inp.value='';
+  setLocal(cur,dd);
+  fbSet(getBoardPath()+'/'+dk(cur),dd);
+  const log=document.getElementById('chatlog_'+taskId);
+  if(log){ log.innerHTML=renderChatLog(dd.tasks[taskId].msgs,dd.tasks[taskId].notes||'',me); log.scrollTop=log.scrollHeight; }
+}
+
+// ═══ PRIORITY ═══
+const PRIORITY_CFG={
+  urgent:{en:'🔴 Urgent', he:'🔴 דחוף',  cls:'p-urgent'},
+  normal:{en:'Normal',    he:'רגיל',      cls:''},
+  low:   {en:'🟢 Low',   he:'🟢 נמוך',  cls:'p-low'},
+};
+function setPriority(taskId,p){
+  const dd=getLocal(cur);
+  if(!dd.tasks[taskId])dd.tasks[taskId]={};
+  dd.tasks[taskId].priority=p;
+  setLocal(cur,dd);
+  fbSet(getBoardPath()+'/'+dk(cur),dd);
+  _buildBoard(getLocal(cur));
+}
+
+// ═══ STATUS LOG ═══
+function _logStatus(dd,taskId,from,to){
+  if(!dd.tasks[taskId])dd.tasks[taskId]={};
+  if(!dd.tasks[taskId].statusLog)dd.tasks[taskId].statusLog=[];
+  dd.tasks[taskId].statusLog.push({from,to,user:getChatUser(),ts:Date.now()});
+}
+function renderStatusLog(log){
+  if(!log||!log.length) return '';
+  const t=tx();
+  const rows=log.slice(-6).map(e=>{
+    const d=new Date(e.ts);
+    const time=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    return `<div class="slog-item">
+      <span class="slog-from">${S_ICON[e.from]||'○'} ${t[e.from]||e.from}</span>
+      <span class="slog-arr">→</span>
+      <span class="status-btn ${S_CLS[e.to]||''}" style="pointer-events:none;padding:1px 8px;font-size:10.5px">${S_ICON[e.to]} ${t[e.to]||e.to}</span>
+      <span class="slog-who">${esc(e.user)}</span>
+      <span class="slog-time">${time}</span>
+    </div>`;
+  }).join('');
+  return `<div class="status-log"><div class="status-log-title">${lang==='he'?'היסטוריית סטטוס':'Status History'}</div>${rows}</div>`;
+}
 
 // ═══ ETA OPTIONS ═══
 const ETA_OPTS = [
@@ -768,8 +886,8 @@ function _buildBoard(dd){
       </div>
     </div>`;
   document.getElementById('boardWrap').innerHTML=html;
-  // Auto-resize all note textareas to fit existing content
-  document.querySelectorAll('.notes-ta').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
+  // Scroll all open chat logs to bottom
+  document.querySelectorAll('.chat-log').forEach(el=>{ el.scrollTop=el.scrollHeight; });
   renderTeamSummary(dd,_curTasks);
 }
 
@@ -824,17 +942,24 @@ function rowHTML(task, dd){
   const assignee = st.assignee || task.assignee || 'all';
   const catLbl = t.cats[task.cat]||task.cat;
   const ciAttr = task._c ? task._ci : -1;
-  const hasNotes = !!(st.notes && st.notes.trim());
+  const priority = st.priority || 'normal';
+  const hasNotes = !!(st.notes && st.notes.trim()) || !!(st.msgs && st.msgs.length);
   const isOpen = _openId === task.id || hasNotes;
-  const notesPreview = st.notes ? `<div class="tc-notes-preview">📝 ${esc(st.notes.substring(0,40))}${st.notes.length>40?'…':''}</div>` : '';
+  const lastMsg = st.msgs && st.msgs.length ? st.msgs[st.msgs.length-1] : null;
+  const notesPreview = lastMsg
+    ? `<div class="tc-notes-preview">💬 ${esc(lastMsg.user)}: ${esc(lastMsg.text.substring(0,35))}${lastMsg.text.length>35?'…':''}</div>`
+    : (st.notes ? `<div class="tc-notes-preview">📝 ${esc(st.notes.substring(0,40))}${st.notes.length>40?'…':''}</div>` : '');
+  const priorityBadge = priority!=='normal' ? `<div class="priority-badge ${PRIORITY_CFG[priority].cls}">${lang==='he'?PRIORITY_CFG[priority].he:PRIORITY_CFG[priority].en}</div>` : '';
   const NEW_MS = 30 * 60 * 1000;
   const isNew = task._c && task.createdAt && status==='pending' && (Date.now()-task.createdAt) < NEW_MS;
+  const meUser = getChatUser();
 
   return `
-    <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''}" id="row_${task.id}" onclick="toggleOpen('${task.id}')">
+    <div class="trow ${isDone?'done':''} ${isStuck?'stuck':''} ${priority==='urgent'?'urgent-row':''}" id="row_${task.id}" onclick="toggleOpen('${task.id}')">
       <div class="t-strip ${STRIP[status]}"></div>
       <div class="t-info">
         <div class="tc-title">${esc(task.title)}</div>
+        ${priorityBadge}
         ${task.desc&&!isOpen?`<div class="tc-desc">${esc(task.desc)}</div>`:''}
         ${notesPreview}
       </div>
@@ -866,7 +991,25 @@ function rowHTML(task, dd){
         <input class="edit-inp" id="et_${task.id}" value="${esc(task.title||'')}" style="flex:2" />
         <input class="edit-inp" id="ed_${task.id}" value="${esc(task.desc||'')}" placeholder="${t.descPh}" style="flex:3" />
       </div>
-      <textarea class="notes-ta" placeholder="${t.notePh}" oninput="debounceSave('${task.id}',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(st.notes||'')}</textarea>
+      <div class="priority-group">
+        <span class="priority-lbl">${lang==='he'?'עדיפות:':'Priority:'}</span>
+        <button class="prio-btn ${priority==='urgent'?'active-urgent':''}" onclick="setPriority('${task.id}','urgent')">${lang==='he'?'🔴 דחוף':'🔴 Urgent'}</button>
+        <button class="prio-btn ${priority==='normal'?'active-normal':''}" onclick="setPriority('${task.id}','normal')">${lang==='he'?'רגיל':'Normal'}</button>
+        <button class="prio-btn ${priority==='low'?'active-low':''}" onclick="setPriority('${task.id}','low')">${lang==='he'?'🟢 נמוך':'🟢 Low'}</button>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-log" id="chatlog_${task.id}" data-empty="${lang==='he'?'אין הודעות עדיין...':'No messages yet...'}">
+          ${renderChatLog(st.msgs||[], st.notes||'', meUser)}
+        </div>
+        <div class="chat-footer">
+          <select class="chat-who" onchange="setChatUser(this.value)">
+            ${CHAT_USERS.map(u=>`<option value="${u}" ${u===meUser?'selected':''}>${u}</option>`).join('')}
+          </select>
+          <input class="chat-inp" id="chatinp_${task.id}" placeholder="${lang==='he'?'הודעה...':'Message...'}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg('${task.id}')}" />
+          <button class="chat-send" onclick="sendMsg('${task.id}')">↑</button>
+        </div>
+      </div>
+      ${renderStatusLog(st.statusLog)}
       <div class="det-btns">
         <button class="btn-save" onclick="saveEdit('${task.id}',${ciAttr})">${t.save}</button>
         <button class="btn-cxl" onclick="closeOpen()">${t.cancel}</button>
@@ -967,10 +1110,11 @@ function openStatusMenu(id, btn){
 function closeStatusMenu(){ document.getElementById('statusMenu').style.display='none'; }
 function setStatus(id, status){
   closeStatusMenu();
-  // Optimistic: update localStorage + DOM immediately, no waiting
   const dd=getLocal(cur);
+  const prev=dd.tasks[id]?.status||'pending';
   if(!dd.tasks[id]) dd.tasks[id]={};
   dd.tasks[id].status=status;
+  _logStatus(dd,id,prev,status);
   setLocal(cur,dd);
   _updateStatusDOM(id,status);
   _updateProgress(dd);
