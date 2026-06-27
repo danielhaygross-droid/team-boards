@@ -74,13 +74,13 @@ body.he{direction:rtl} body.en{direction:ltr}
 
 /* ── TABLE ── */
 .tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:14px}
-.tbl-head{display:grid;grid-template-columns:4px 1fr 100px 120px 80px 60px;align-items:center;padding:0 14px;height:36px;background:var(--s2);border-bottom:1px solid var(--border);gap:10px}
+.tbl-head{display:grid;grid-template-columns:4px 1fr 52px 100px 100px 120px 76px 60px;align-items:center;padding:0 14px;height:36px;background:var(--s2);border-bottom:1px solid var(--border);gap:8px}
 body.he .tbl-head{direction:rtl}
 .th{font-size:10.5px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
 .tbl-section{font-size:10.5px;font-weight:700;color:var(--t2);letter-spacing:.06em;text-transform:uppercase;padding:10px 18px 6px;border-bottom:1px solid var(--border);background:var(--s2)}
 
 /* ── ROW ── */
-.trow{display:grid;grid-template-columns:4px 1fr 100px 120px 80px 60px;align-items:center;padding:0 14px;min-height:50px;border-bottom:1px solid var(--border);gap:10px;transition:background .12s;cursor:pointer;position:relative}
+.trow{display:grid;grid-template-columns:4px 1fr 52px 100px 100px 120px 76px 60px;align-items:center;padding:0 14px;min-height:50px;border-bottom:1px solid var(--border);gap:8px;transition:background .12s;cursor:pointer;position:relative}
 body.he .trow{direction:rtl}
 .trow:last-child{border-bottom:none}
 .trow:hover{background:var(--s2)}
@@ -235,6 +235,11 @@ body.he .fi{direction:rtl} body.en .fi{direction:ltr}
 .shop-opt{padding:8px 12px;border-radius:var(--r);font-size:13px;cursor:pointer;color:var(--text);white-space:nowrap;transition:background .1s}
 .shop-opt:hover{background:var(--green-l);color:var(--green)}
 .shop-opt.unset-opt{color:var(--t3)}
+
+/* ── ETA SELECT ── */
+.eta-sel{width:100%;border:1px solid var(--border2);border-radius:20px;padding:3px 7px;font-size:11px;font-weight:600;font-family:inherit;background:var(--s2);color:var(--t2);outline:none;cursor:pointer;transition:all .15s}
+.eta-sel:hover{background:var(--surface);color:var(--text)}
+.eta-sel:focus{border-color:var(--blue)}
 
 /* ── NEW BADGE ── */
 .new-badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:800;background:#F97316;color:#fff;letter-spacing:.07em;vertical-align:middle;margin-inline-end:6px;animation:newglow 1.8s ease-in-out infinite}
@@ -448,6 +453,21 @@ const DAILY_LABELS = {
     d_shops_pm: {title:'סיבוב על החנויות — ערב',  desc:'בדיקה שנייה: הזמנות, ביקורות, בעיות'},
   }
 };
+
+// ═══ ETA OPTIONS ═══
+const ETA_OPTS = [
+  {v:'',    en:'— Time',   he:'— זמן'},
+  {v:'5',   en:'5 min',    he:'5 דק׳'},
+  {v:'10',  en:'10 min',   he:'10 דק׳'},
+  {v:'15',  en:'15 min',   he:'15 דק׳'},
+  {v:'25',  en:'25 min',   he:'25 דק׳'},
+  {v:'30',  en:'30 min',   he:'30 דק׳'},
+  {v:'40',  en:'40 min',   he:'40 דק׳'},
+  {v:'50',  en:'50 min',   he:'50 דק׳'},
+  {v:'60',  en:'1 hour',   he:'שעה'},
+  {v:'120', en:'2 hours',  he:'שעתיים'},
+  {v:'180', en:'3 hours',  he:'3 שעות'},
+];
 
 const STATUSES = ['pending','inprogress','done','stuck'];
 const S_ICON = {pending:'○', inprogress:'◑', done:'✓', stuck:'⚠'};
@@ -702,7 +722,8 @@ function _buildBoard(dd){
     html+=`<div class="tbl-card">
       <div class="tbl-section">${t.secDaily}</div>
       <div class="tbl-head">
-        <div></div><div class="th">${t.thTask}</div><div class="th">${t.thAssignee}</div>
+        <div></div><div class="th">${t.thTask}</div><div class="th"></div>
+        <div class="th">${t.thAssignee}</div><div class="th">${lang==='he'?'זמן':'TIME'}</div>
         <div class="th">${t.thStatus}</div><div class="th">${t.thCat}</div><div class="th"></div>
       </div>`;
     dailyTasks.forEach(task=>{html+=rowHTML(task,dd);});
@@ -712,7 +733,8 @@ function _buildBoard(dd){
     html+=`<div class="tbl-card">
       <div class="tbl-section">${t.secCustom}</div>
       <div class="tbl-head">
-        <div></div><div class="th">${t.thTask}</div><div class="th">${t.thAssignee}</div>
+        <div></div><div class="th">${t.thTask}</div><div class="th"></div>
+        <div class="th">${t.thAssignee}</div><div class="th">${lang==='he'?'זמן':'TIME'}</div>
         <div class="th">${t.thStatus}</div><div class="th">${t.thCat}</div><div class="th"></div>
       </div>`;
     customTasks.forEach(task=>{html+=rowHTML(task,dd);});
@@ -814,9 +836,16 @@ function rowHTML(task, dd){
         ${task.desc&&!isOpen?`<div class="tc-desc">${esc(task.desc)}</div>`:''}
         ${notesPreview}
       </div>
-      <div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:flex-start;gap:3px">
+      <div style="display:flex;align-items:center;justify-content:center">
         ${isNew?`<span class="new-badge">✦ NEW</span>`:''}
+      </div>
+      <div onclick="event.stopPropagation()">
         ${assigneePill(assignee, task.id, ciAttr)}
+      </div>
+      <div onclick="event.stopPropagation()">
+        <select class="eta-sel" onchange="setEta('${task.id}',this.value)" title="${lang==='he'?'זמן משוער':'Estimated time'}">
+          ${ETA_OPTS.map(o=>`<option value="${o.v}" ${(st.eta||'')=== o.v?'selected':''}>${o[lang]}</option>`).join('')}
+        </select>
       </div>
       <div onclick="event.stopPropagation()">
         <button class="status-btn ${S_CLS[status]}" onclick="openStatusMenu('${task.id}',this)">${S_ICON[status]} ${t[status]} ▾</button>
@@ -1013,6 +1042,14 @@ function openAssigneeMenu(id, ci, btn){
   menu.classList.add('open');
 }
 function closeAssigneeMenu(){ document.getElementById('assigneeMenu').classList.remove('open'); _assigneeCtx=null; }
+
+function setEta(taskId, val){
+  const dd=getLocal(cur);
+  if(!dd.tasks[taskId]) dd.tasks[taskId]={};
+  dd.tasks[taskId].eta=val;
+  setLocal(cur,dd);
+  fbSet(getBoardPath()+'/'+dk(cur),dd);
+}
 
 function setAssignee(key){
   const ctx=_assigneeCtx; closeAssigneeMenu();
