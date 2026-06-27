@@ -134,7 +134,7 @@ body.he .t-strip{margin:0 -14px 0 -6px}
 .trow-notes{background:var(--s2);border-bottom:1px solid var(--border);padding:6px 18px 10px}
 .trow-detail{display:none;background:var(--s2);border-bottom:1px solid var(--border);padding:4px 18px 12px}
 .trow-detail.open{display:block}
-.notes-ta{width:100%;min-height:56px;border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;font-size:12.5px;font-family:inherit;color:var(--text);background:var(--surface);resize:vertical;outline:none;line-height:1.6;transition:border-color .15s}
+.notes-ta{width:100%;min-height:56px;border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;font-size:12.5px;font-family:inherit;color:var(--text);background:var(--surface);resize:none;overflow:hidden;outline:none;line-height:1.6;transition:border-color .15s}
 body.he .notes-ta{direction:rtl} body.en .notes-ta{direction:ltr}
 .notes-ta:focus{border-color:var(--blue);background:var(--surface)}
 .notes-ta::placeholder{color:var(--t3)}
@@ -768,6 +768,8 @@ function _buildBoard(dd){
       </div>
     </div>`;
   document.getElementById('boardWrap').innerHTML=html;
+  // Auto-resize all note textareas to fit existing content
+  document.querySelectorAll('.notes-ta').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
   renderTeamSummary(dd,_curTasks);
 }
 
@@ -864,7 +866,7 @@ function rowHTML(task, dd){
         <input class="edit-inp" id="et_${task.id}" value="${esc(task.title||'')}" style="flex:2" />
         <input class="edit-inp" id="ed_${task.id}" value="${esc(task.desc||'')}" placeholder="${t.descPh}" style="flex:3" />
       </div>
-      <textarea class="notes-ta" placeholder="${t.notePh}" oninput="debounceSave('${task.id}',this.value)">${esc(st.notes||'')}</textarea>
+      <textarea class="notes-ta" placeholder="${t.notePh}" oninput="debounceSave('${task.id}',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(st.notes||'')}</textarea>
       <div class="det-btns">
         <button class="btn-save" onclick="saveEdit('${task.id}',${ciAttr})">${t.save}</button>
         <button class="btn-cxl" onclick="closeOpen()">${t.cancel}</button>
